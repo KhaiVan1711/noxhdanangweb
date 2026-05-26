@@ -18,12 +18,21 @@ let aiClient: GoogleGenAI | null = null;
 let lastUsedApiKey: string | undefined = undefined;
 
 function getAIClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
+  dotenv.config({ override: true });
+  let apiKey = process.env.GEMINI_API_KEY;
+  if (apiKey) {
+    apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
+  }
+  
+  if (apiKey) {
+    const masked = apiKey.length > 10 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
+    console.log(`[AI Client Info] Using API Key: ${masked}`);
+  } else {
+    console.warn("[AI Client Info] No GEMINI_API_KEY found in process.env");
+  }
+
   if (!aiClient || lastUsedApiKey !== apiKey) {
     lastUsedApiKey = apiKey;
-    if (!apiKey) {
-      console.warn("GEMINI_API_KEY is not defined in the environment variables.");
-    }
     aiClient = new GoogleGenAI({
       apiKey: apiKey || "",
       httpOptions: {
@@ -48,31 +57,85 @@ app.post("/api/chat", async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    const ai = getAIClient();
+    // Reload dotenv dynamically
+    dotenv.config({ override: true });
     
+    // Fetch live database up-to-date projects, news and stats
+    const db = readDb();
+    const projectsList = (db.projects || []).map((p: any) => {
+      const pReqs = Array.isArray(p.requirements) 
+        ? p.requirements.map((r: string) => `    * ${r}`).join("\n") 
+        : "    * Đáp ứng điều kiện chung của Sở Xây dựng Đà Nẵng";
+      return `- **Tên dự án: ${p.name}**
+    * Địa chỉ/Vị trí: ${p.location} (Phường/Xã: ${p.districts || "Chưa cập nhật"})
+    * Chủ đầu tư: ${p.investor || "Ban quản lý dự án Sở Xây dựng"}
+    * Trạng thái hồ sơ: ${p.status || "Chưa xác định"}
+    * Đơn giá: ${p.price || "Chưa công bố"} (Giá trị nội bộ: ${p.priceRaw ? p.priceRaw.toLocaleString('vi-VN') + ' VNĐ/m²' : 'N/A'})
+    * Tiến độ xây dựng: ${p.progress || 0}%
+    * Quy mô thiết kế: ${p.scale || "Đang cập nhật"}
+    * Loại căn hộ: ${p.types || "Căn hộ tiêu chuẩn thương mại xã hội"}
+    * Hạn chót nộp hồ sơ / Dự kiến bàn giao: ${p.deadline || "Xem hướng dẫn Sở"}
+    * Hotline tư vấn: ${p.hotline || "1900 1000"}
+    * Yêu cầu / Điều kiện đặc thù của dự án:
+${pReqs}`;
+    }).join("\n\n");
+
+    const newsList = (db.news || []).slice(0, 5).map((n: any) => {
+      return `- **Bài viết/Quyết định mới: ${n.title}** (${n.date || "Gần đây"})
+    * Tóm tắt bài đăng: ${n.excerpt || ""}
+    * Nội dung văn bản chính thức: ${n.content || ""}`;
+    }).join("\n\n");
+
+    const statsList = (db.stats || []).map((s: any) => `  * ${s.label}: ${s.count} (${s.subDec})`).join("\n");
+
     const systemInstruction = `
-Bạn là NOXH Bot, một Trợ lý ảo cực kỳ am hiểu và tận tụy của Cổng Tra cứu Nhà ở Xã hội (NOXH) Thành phố Đà Nẵng, do Sở Xây dựng thành phố vận hành.
-Nhiệm vụ của bạn là giải đáp mọi thắc mắc của người dân về nhà ở xã hội một cách trung thực, rõ ràng, giàu tính nhân văn và ấm áp.
+Bạn là NOXH Bot, một Trợ lý ảo cực kỳ am hiểu và tận tụy của Cổng Tra cứu Nhà ở Xã hội (NOXH) Thành phố Đà Nẵng, do Sở Xây dựng thành phố vận hành trực tiếp.
+Nhiệm vụ của bạn là giải đáp chính xác, trung thực, rõ ràng và ấm áp cho mọi thắc mắc của người dân (Dân cư) Việt Nam về các dự án nhà ở xã hội đang hoạt động tại Đà Nẵng.
 
-Thông tin về điều kiện được mua/thuê NOXH:
-1. Đối tượng: Công chức, quân nhân, người lao động tại KCN, người thu nhập thấp hoặc hộ nghèo đô thị tại Đà Nẵng chưa có nhà ở đứng tên.
-2. Điều kiện cư trú: Khách hàng cần có đăng ký thường trú hoặc tạm trú tại TP. Đà Nẵng từ 1 năm trở lên, đồng thời đóng Bảo hiểm Xã hội (BHXH) tỉnh Đà Nẵng tối thiểu 1 năm.
-3. Điều kiện thu nhập: Tổng thu nhập gia đình không thuộc diện nộp thuế thu nhập cá nhân thường xuyên.
-4. Điều kiện nhà ở: Tất cả các thành viên trong hộ khẩu chưa đứng tên trên sổ hồng hay có quyền sở hữu nhà tại Đà Nẵng, diện tích trung bình dưới 10m²/người.
+--- CƠ SỞ DỮ LIỆU THỜI GIAN THỰC TỪ HỆ THỐNG QUẢN LÝ ---
 
-Thông tin các dự án hỗ trợ (thuộc hành chính cấp Phường Xã số hóa mới):
-- "NOXH Khu công nghiệp Hòa Khánh" (Phường Hòa Khánh Bắc): Giá ~9.4tr/m², tiến độ 80%, đang thu nhận hồ sơ.
-- "The Ori Garden Bàu Tràm" (Phường Hòa Hiệp Nam): Giá ~12.5tr/m², tiến độ 40%, chuẩn bị mở bán giai đoạn tiếp theo.
-- "Chung cư xã hội Khu Nam Cầu Tuyên Sơn" (Phường Khuê Mỹ): Giá ~14.2tr/m², tiến độ 90%, đang nhận hồ sơ đợt cuối.
-- "NOXH An Phú Đông" (Phường Hòa Thọ Đông): Giá ~11.8tr/m², tiến độ 15%, khởi công chuẩn bị mở bán.
-- "Chung cư thu nhập thấp Nại Hiên Đông" (Phường Nại Hiên Đông): Đã hết quỹ căn ngoại giao, hoàn thành bàn giao 100%.
+1. Điều kiện chung và tiêu chí chấm điểm để được sở hữu/mua/thuê NOXH tại TP. Đà Nẵng:
+  - Đối tượng thụ hưởng: Cán bộ, công chức, viên chức Nhà nước; sĩ quan quân nhân chuyên nghiệp quân đội/công an; hộ gia đình nghèo/cận nghèo đô thị; người lao động, công nhân đang làm việc trực tiếp tại các khu công nghiệp, doanh nghiệp trên địa bàn TP. Đà Nẵng chưa có nhà ở thuộc sở hữu cá nhân hay đại diện hộ gia đình.
+  - Điều kiện cư trú bắt buộc: Phải có đăng ký thường trú hoặc đăng ký tạm trú thực tế tại TP. Đà Nẵng từ 01 năm trở lên liên tiếp, đồng thời bắt buộc đang tham gia BHXH tại tỉnh Đà Nẵng tối thiểu 12 tháng.
+  - Điều kiện thu nhập: Tổng thu nhập thực tế của tất cả thành viên trong hộ gia đình KHÔNG thuộc diện đóng thuế thu nhập cá nhân (TNCN) thường xuyên.
+  - Điều kiện thực trạng nhà ở: Gia đình chưa từng đứng tên quyền sử dụng đất hoặc sở hữu nhà riêng tại Đà Nẵng; diện tích sàn ở bình quân của cả hộ hiện tại dưới 10m²/người (hoặc chuẩn mới dưới 15m²/người tùy hộ giải tỏa tái định cư).
 
-Hãy xưng là "NOXH Bot", xưng hô lễ phép "Dạ chào anh/chị", "Dân cư". Luôn trả lời có cấu trúc Markdown chuyên nghiệp, rõ ràng từng ý bằng gạch đầu dòng. Cho lời khuyên hữu ích về thủ tục nộp giấy tờ (ví dụ Đơn 01, Đơn 03 xác nhận thực trạng nhà ở).
+2. Danh sách tất cả các Dự án NOXH chính thức của Đà Nẵng trực thuộc hệ thống Sở:
+${projectsList}
+
+3. Các thông báo, văn bản pháp luật, chính sách và tin cảnh báo mới nhất từ Sở Xây dựng:
+${newsList}
+
+4. Thống kê thông tin vận hành từ Sở Xây dựng:
+${statsList}
+
+--- QUY TẮC PHÁT NGÔN & ỨNG XỬ THỰC TẾ ---
+- Luôn xưng danh là "NOXH Bot", xưng hô lễ phép "Dạ chào anh/chị", "Kính chào Dân cư" hoặc "Dạ, em chào anh/chị ạ".
+- Trả lời bằng tiếng Việt lịch sự, súc tích, chuyên nghiệp có cấu trúc Markdown rõ nét với các gạch đầu dòng và bôi đậm tiêu đề lớn để người dân dễ nhìn và hiểu ngay.
+- CHỈ phản hồi tin tức dựa trên danh sách dự án và bài báo THỰC TẾ TRÊN DATABASE ở trên. Nếu người dân hỏi về dự án hoàn toàn lạ lẫm hoặc không xuất hiện trong danh sách dữ liệu trên, hãy giải thích khéo léo và duyên dáng rằng "Hiện dự án này chưa được công bố hoặc Sở Xây dựng thành phố chưa phê duyệt trên hệ thống dữ liệu số chính thống."
+- Đưa ra lời khuyên chi tiết về đơn thư biểu mẫu (các loại Đơn mẫu số 01 đăng ký, Đơn mẫu số 03 xác nhận thực trạng nhà ở của cơ quan hoặc phường xã).
+- Phát đi cảnh báo khẩn cấp cho người dân: Tuyệt đối tránh xa các hội nhóm facebook, zalo, môi giới tự dưng đòi thu "phí hoa hồng bôi trơn", "đóng cọc giữ căn hộ đẹp" trái luật pháp vì Sở Xây dựng Đà Nẵng xử lý bốc thăm công khai hoàn toàn MIỄN PHÍ.
 `;
 
-    if (!process.env.GEMINI_API_KEY) {
-      // Demo mode streaming simulation
-      const demoResponse = `Dạ chào anh/chị! Hiện tại chatbot của Sở đang chạy ở chế độ mô phỏng trực tuyến (không có GEMINI_API_KEY). \n\nAnh/chị vui lòng cập nhật khóa API trong phần cấu hình hoặc trong bảng quản trị để dùng AI chính chủ nhé!\n\nDưới đây là thông tin tra cứu cập nhật 2026 cho anh/chị:\n\n- **Dự án Hòa Khánh** (Phường Hòa Khánh Bắc): Đang nhận hồ sơ, giá khoảng 9.4tr/m².\n- **The Ori Garden** (Phường Hòa Hiệp Nam): Sắp mở bán dòng sản phẩm NOXH chất lượng cao.\n- **Hồ sơ mua**: Phải chưa có nhà ở TP. Đà Nẵng, thường trú hoặc tạm trú trên 1 năm kèm tham gia BHXH đầy đủ tại Đà Nẵng.`;
+    const ai = getAIClient();
+    let apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
+    }
+
+    if (!apiKey || apiKey === "AIzaSy..." || apiKey === "") {
+      // Demo mode streaming simulation using LIVE DB projects for accurate answers even without key!
+      const liveProjNames = (db.projects || []).map((p: any) => `- **${p.name}** (${p.districts || "Phường xã"}): Trạng thái ${p.status || "Chưa rành"}, đơn giá ${p.price || "Chưa rõ"}, tiến độ ${p.progress || 0}%`).join("\n");
+      const demoResponse = `Dạ chào anh/chị! Hiện tại chatbot của Sở đang chạy ở chế độ mô phỏng trực tuyến (không nhận được GEMINI_API_KEY hợp lệ hoặc chưa lưu). 
+
+Tuy nhiên, chatbot vẫn đồng bộ thông tin dự án hiện thực từ hệ thống cơ sở dữ liệu Đà Nẵng cho anh/chị tham khảo ngay lúc này:
+
+${liveProjNames}
+
+- **Hồ sơ xin mua**: Anh/chị lưu ý phải chưa sở hữu nhà đất tại TP. Đà Nẵng, có đăng ký thường trú hoặc tạm trú trên 1 năm kèm tham gia đóng Bảo hiểm Xã hội (BHXH) đầy đủ tại Đà Nẵng và thuộc diện thu nhập không chịu thuế TNCN thường xuyên.
+- **Thủ tục**: Phải chuẩn bị Đơn 01 (Đơn xin mua) và Đơn 03 (Đơn xác nhận thực trạng nhà đất của địa phương/công ty).
+
+*Bảo mật & Kích hoạt:* Anh/chị có thể cập nhật khóa API Gemini AI vào file cấu hình \`.env\` để kích hoạt chatbot thông thái toàn năng hoạt động ngay lập tức! Thay đổi dữ liệu trong Admin sẽ phản ánh trực tiếp ở đây ạ!`;
       
       const words = demoResponse.split(" ");
       for (const word of words) {
