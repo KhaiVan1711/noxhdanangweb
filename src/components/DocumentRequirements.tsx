@@ -226,14 +226,18 @@ export function DocumentRequirements() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-1">
                   {[
-                    { val: "5", label: "Cá nhân thu nhập thấp tại khu vực đô thị" },
-                    { val: "6", label: "Công nhân, người lao động tại KCN/Doanh nghiệp" },
-                    { val: "7", label: "Sĩ quan, quân nhân, hạ sĩ quan lực lượng vũ trang" },
-                    { val: "8", label: "Cán bộ, công chức, viên chức Nhà nước" },
-                    { val: "1", label: "Người có công với cách mạng, thân nhân liệt sĩ" },
-                    { val: "4", label: "Hộ gia đình nghèo, cận nghèo tại đô thị" },
-                    { val: "11", label: "Học sinh, sinh viên tại các trường công lập" },
-                    { val: "10", label: "Hộ thu hồi đất, giải tỏa chưa bồi thường bằng nhà ở" }
+                    { val: "1", label: "1. Người có công với cách mạng, thân nhân liệt sĩ" },
+                    { val: "2", label: "2. Hộ nghèo, cận nghèo tại nông thôn" },
+                    { val: "3", label: "3. Hộ miền Trung nghèo thường xuyên bị bão lũ/thiên tai" },
+                    { val: "4", label: "4. Hộ nghèo, cận nghèo tại khu vực đô thị" },
+                    { val: "5", label: "5. Cá nhân thu nhập thấp tại khu vực đô thị" },
+                    { val: "6", label: "6. Công nhân, lao động tại KCN/Doanh nghiệp Đà Nẵng" },
+                    { val: "7", label: "7. Sĩ quan, quân nhân chuyên nghiệp, CAP lực lượng vũ trang" },
+                    { val: "8", label: "8. Cán bộ, công chức, viên chức Nhà nước" },
+                    { val: "9", label: "9. Đối tượng trả lại nhà ở công vụ chưa có nhà mới" },
+                    { val: "10", label: "10. Hộ thu hồi đất, giải tỏa chưa đền bù bằng nhà" },
+                    { val: "11", label: "11. Học sinh, sinh viên tại các trường công lập" },
+                    { val: "12", label: "12. Hợp tác xã, liên hiệp HTX có nhu cầu nhà ở KCN" }
                   ].map((gp) => (
                     <button
                       key={gp.val}
@@ -414,18 +418,20 @@ export function DocumentRequirements() {
 
                       <input
                         type="range"
-                        min="2000000"
-                        max="65000000"
+                        min="0"
+                        max="500000000"
                         step="1000000"
                         value={incomeValue}
                         onChange={(e) => setIncomeValue(Number(e.target.value))}
                         className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-900"
                       />
                       <div className="flex justify-between text-[10px] text-slate-400 font-bold font-mono">
-                        <span>2.000.000 đ</span>
-                        <span>20.000.000 đ</span>
-                        <span>40.000.000 đ</span>
-                        <span>60.000.000 đ</span>
+                        <span>0 đ</span>
+                        <span>100.000.000 đ</span>
+                        <span>200.000.000 đ</span>
+                        <span>300.000.000 đ</span>
+                        <span>400.000.000 đ</span>
+                        <span>500.000.000 đ</span>
                       </div>
                     </div>
                   )}
