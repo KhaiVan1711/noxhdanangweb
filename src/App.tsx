@@ -6,6 +6,7 @@ import { DocumentRequirements } from "./components/DocumentRequirements";
 import { NewsSection } from "./components/NewsSection";
 import { ChatAssistant } from "./components/ChatAssistant";
 import { AdminPanel } from "./components/AdminPanel";
+import heroBg from "./hero-bg.jpg";
 import { 
   Building2, 
   Map, 
@@ -291,9 +292,9 @@ export default function App() {
         
         {activeTab === "home" && (
           <section className="relative min-h-[85vh] flex items-center justify-center pt-12 pb-24 px-4 sm:px-10 overflow-hidden">
-            {/* Background Image from Resolved Google Photos */}
+            {/* Background Image from Resolved Google Photos (Bundled statically for consistency) */}
             <img
-              src="/api/hero-image"
+              src={heroBg}
               alt="Cổng thông tin Nhà ở Xã hội Đà Nẵng"
               className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none animate-fade-in"
               referrerPolicy="no-referrer"
