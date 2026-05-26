@@ -6,7 +6,6 @@ import { DocumentRequirements } from "./components/DocumentRequirements";
 import { NewsSection } from "./components/NewsSection";
 import { ChatAssistant } from "./components/ChatAssistant";
 import { AdminPanel } from "./components/AdminPanel";
-import heroBg from "./hero-bg.jpg";
 import { 
   Building2, 
   Map, 
@@ -294,7 +293,7 @@ export default function App() {
           <section className="relative min-h-[85vh] flex items-center justify-center pt-12 pb-24 px-4 sm:px-10 overflow-hidden">
             {/* Background Image from Resolved Google Photos (Bundled statically for consistency) */}
             <img
-              src={heroBg}
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwaHQxPL8wE7n0P-S5o6noejMX_782tx-fBGFeDWqPKD28JLI3zMiMI0FaZ6WtMbJsKj4PmRR22LFkHcChBWAkuwhzsONN6NENAuJzlY04oYSx7YrgR56rSsL3Q_3K3u4lR-tG6rGBfEl7Dmn3xsz_46gda4xC79cNrt54sOehUPphSaziSheIc9FBXz7jbKVwfG7JaQ76vTZX2A9cJsv6K5BLvjIkWpldRL7d73q4fVGQn76R7ymGo9Mcpf_RFf0sZYyyOHl6tUF89w"
               alt="Cổng thông tin Nhà ở Xã hội Đà Nẵng"
               className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none animate-fade-in"
               referrerPolicy="no-referrer"
