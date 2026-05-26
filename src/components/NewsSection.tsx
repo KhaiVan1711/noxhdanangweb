@@ -1,5 +1,30 @@
 import React, { useState, useEffect } from "react";
-import { Search, Calendar, FileText, ArrowRight, BookOpen, Clock, Tag } from "lucide-react";
+import { 
+  Search, 
+  Calendar, 
+  FileText, 
+  ArrowRight, 
+  BookOpen, 
+  Clock, 
+  Tag, 
+  Layers, 
+  Copy, 
+  Check, 
+  Terminal, 
+  Zap, 
+  RefreshCw, 
+  AlertTriangle, 
+  Cpu, 
+  Compass, 
+  Globe, 
+  Sparkles, 
+  User,
+  ExternalLink,
+  ChevronRight,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 
 interface Article {
   id: string;
@@ -25,7 +50,7 @@ Mục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 
 Sở Xây dựng Đà Nẵng sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.`,
     date: "20/05/2026",
     category: "Announcement",
-    categoryLabel: "Thông Báo Sửa",
+    categoryLabel: "Thông Báo Sắp Mở",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
     author: "Văn phòng Sở Xây dựng Đà Nẵng"
   },
@@ -61,22 +86,6 @@ Buổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám s
     categoryLabel: "Tiến Độ Dự Án",
     image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
     author: "Hội đồng Thẩm định dự án Đà Nẵng"
-  },
-  {
-    id: "news-4",
-    title: "Cảnh báo mạo danh chuyên viên ban ngành Sở để nhận tiền 'cọc giữ chỗ' nhà ở xã hội",
-    excerpt: "Sở Xây dựng Đà Nẵng đưa ra thông báo khẩn cấp khuyến cáo người lao động tránh các hội nhóm môi giới thu phí hoa hồng để đặt chỗ mua căn hộ trái luật.",
-    content: `Sở Xây dựng thành phố Đà Nẵng vừa phát đi thông báo khẩn số 112/TB-SXD về việc phát hiện một số đối tượng, sàn giao dịch bất động sản mạo danh là chuyên viên Ban chính sách nhà ở để thu nhận phí dịch vụ, tiền cọc 'đảm bảo 100% bốc trúng' căn hộ NOXH tại khu vực Phường Khuê Mỹ.
-
-Sở Xây dựng tái khẳng định:
-- Tất cả quy trình tiếp nhận, hướng dẫn khai phôi đơn và thẩm duyệt chấm điểm hồ sơ hoàn toàn **MIỄN PHÍ** 100%.
-- Không hề có bất kỳ ủy quyền môi giới trung gian cho bất kỳ đơn vị sàn thương mại tự do nào.
-- Mọi hình thức hứa hẹn giữ chỗ đóng tiền mặt đều là hành vi gian lận pháp luật, người dân khi phát hiện vui lòng trình báo ngay cho cơ quan công an phường gần nhất để kịp thời can thiệp xử lý hình sự.`,
-    date: "28/04/2026",
-    category: "Announcement",
-    categoryLabel: "Tin Cảnh Giác",
-    image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800",
-    author: "Văn phòng Thanh tra xây dựng thành phố"
   }
 ];
 
@@ -85,8 +94,7 @@ export function NewsSection() {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
   const [articles, setArticles] = useState<Article[]>([]);
-
-  // Periodically listen to event changes to instantly keep updated in multi-tab syncing
+  
   const loadNewsData = () => {
     fetch("/api/news")
       .then((res) => res.json())
@@ -106,159 +114,275 @@ export function NewsSection() {
   useEffect(() => {
     loadNewsData();
 
-    // Custom event to force internal trigger in single-page updates
     window.addEventListener("refresh-noxh-data", loadNewsData);
     return () => window.removeEventListener("refresh-noxh-data", loadNewsData);
   }, []);
 
+  // Filters & Search
   const filteredArticles = articles.filter((art) => {
     const matchesSearch = art.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          art.excerpt.toLowerCase().includes(searchQuery.toLowerCase());
+                          art.excerpt.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                          art.content.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = activeCategory === "all" || art.category === activeCategory;
     return matchesSearch && matchesCategory;
   });
 
+  const getCategoryCount = (catId: string) => {
+    if (catId === "all") return articles.length;
+    return articles.filter(a => a.category === catId).length;
+  };
+
+  // Split featured (latest) and list
+  const featuredArticle = filteredArticles.length > 0 ? filteredArticles[0] : null;
+  const standardArticles = filteredArticles.length > 1 ? filteredArticles.slice(1) : [];
+
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
+    <div className="max-w-6xl mx-auto space-y-8 animate-fade-up relative">
       
-      {/* Detail view Modal */}
+
+
+      {/* Detail View Modal (Premium Reader View) */}
       {selectedArticle && (
-        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-2xl w-full max-h-[90vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up">
+        <div className="fixed inset-0 z-[200] bg-slate-950/75 backdrop-blur-xl flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col text-left shadow-2xl border border-slate-200 animate-scale-up">
             
-            <div className="relative h-56 overflow-hidden">
+            {/* Header image area */}
+            <div className="relative h-64 shrink-0 overflow-hidden">
               <img
                 alt={selectedArticle.title}
                 className="w-full h-full object-cover"
                 src={selectedArticle.image}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/45 to-transparent"></div>
+              
               <button
                 onClick={() => setSelectedArticle(null)}
-                className="absolute top-4 right-4 p-2 bg-black/30 hover:bg-black/50 rounded-full text-white transition-colors cursor-pointer"
+                className="absolute top-5 right-5 w-9 h-9 flex items-center justify-center bg-slate-950/40 hover:bg-slate-950/60 rounded-full text-white transition-all cursor-pointer backdrop-blur-sm shadow border border-white/15"
               >
                 <span className="material-symbols-outlined text-[18px]">close</span>
               </button>
               
-              <div className="absolute bottom-4 left-6">
-                <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-600 text-white uppercase tracking-wider">
+              <div className="absolute bottom-5 left-6 right-6">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black bg-blue-600 text-white uppercase tracking-wider shadow">
+                  <Tag className="w-3 h-3" />
                   {selectedArticle.categoryLabel}
                 </span>
-                <h4 className="font-sans font-black text-white text-md md:text-lg leading-snug mt-1 max-w-xl">
+                <h4 className="font-sans font-extrabold text-white text-lg md:text-xl leading-tight mt-2 max-w-xl text-shadow-sm">
                   {selectedArticle.title}
                 </h4>
               </div>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div className="flex justify-between items-center text-xs text-slate-400 font-sans border-b border-slate-100 pb-3">
-                <div className="flex items-center gap-1.5 font-semibold text-slate-500">
-                  <Calendar className="h-4.5 w-4.5 text-slate-400" />
+            {/* Content body layout */}
+            <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1">
+              <div className="flex flex-wrap justify-between items-center text-xs text-slate-400 font-sans border-b border-slate-100 pb-4 gap-4">
+                <div className="flex items-center gap-2 font-bold text-slate-500">
+                  <Calendar className="h-4 w-4 text-blue-500" />
                   <span>Ngày đăng: {selectedArticle.date}</span>
                 </div>
-                <span>Tác giả: {selectedArticle.author}</span>
+                <div className="flex items-center gap-2 font-bold text-slate-600 bg-slate-50 border border-slate-100 px-3 py-1 rounded-full">
+                  <User className="h-3.5 w-3.5 text-blue-500/70" />
+                  <span>{selectedArticle.author}</span>
+                </div>
               </div>
 
-              <div className="text-slate-700 font-sans text-xs md:text-sm leading-relaxed whitespace-pre-line space-y-3">
+              <div className="text-slate-700 font-sans text-[13px] md:text-sm leading-relaxed whitespace-pre-line space-y-4">
                 {selectedArticle.content}
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end">
-                <button
-                  onClick={() => setSelectedArticle(null)}
-                  className="px-5 py-2 bg-primary-dark hover:bg-opacity-95 text-white font-sans font-bold text-xs rounded-xl cursor-pointer shadow-sm"
-                >
-                  Đóng bài viết
-                </button>
+              {/* Automation notice inside reading panel */}
+              <div className="bg-slate-50 border border-slate-150 p-4 rounded-2xl flex items-start gap-3">
+                <Cpu className="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-[11px] font-extrabold text-slate-800 uppercase block">Hệ thống đồng bộ tin tức</span>
+                  <p className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+                    Bài viết này được quản lý và cập nhật qua API tự động bảo mật. Bạn có thể kết nối bất kỳ hệ thống ngoài (n8n, Make, Custom Python Scraper) qua Webhook Token đã được cấu hình.
+                  </p>
+                </div>
               </div>
+            </div>
+
+            {/* Sticky close action footer bar */}
+            <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/90 backdrop-blur-sm flex justify-end shrink-0">
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="px-6 py-2.5 bg-slate-900 border border-slate-950 text-white hover:bg-slate-850 font-sans font-bold text-xs rounded-xl cursor-pointer shadow transition-all active:scale-[0.98]"
+              >
+                Đóng bài viết
+              </button>
             </div>
 
           </div>
         </div>
       )}
 
-      {/* Main filter categories header */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white p-4.5 border border-slate-150 rounded-2.5xl shadow-sm text-left">
-        <div className="flex items-center gap-2">
-          <BookOpen className="h-5 w-5 text-blue-600" />
-          <h3 className="font-sans font-bold text-slate-800 text-sm md:text-base uppercase tracking-tight">
-            TIN TỨC PHÁT TRIỂN & CHÍNH SÁCH NOXH ĐÀ NẴNG
-          </h3>
+
+
+      {/* ── CENTRALIZED FILTER AND SEARCH CONTROLLER ── */}
+      <div className="bg-white border border-slate-200 rounded-[32px] p-5 shadow-lg flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 text-left">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
+            <BookOpen className="h-5 w-5 text-blue-600" />
+          </div>
+          <div>
+            <h3 className="font-sans font-black text-slate-900 text-sm md:text-base uppercase tracking-tight">
+              Kênh Tin Tức & Phân Tích Địa Ốc NOXH ĐÀ NẴNG
+            </h3>
+            <p className="text-slate-400 text-[10.5px] font-medium leading-none mt-1">Đồng bộ chính thức dữ liệu quy hoạch Nhà ở Xã hội thành phố</p>
+          </div>
         </div>
 
-        {/* Categories toggler */}
-        <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 md:pb-0">
+        {/* Categories sliding tabs with counters */}
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-none pb-1 md:pb-0 shrink-0 items-center">
           {[
             { id: "all", label: "Tất cả" },
-            { id: "Announcement", label: "Thông báo sửa" },
-            { id: "Policy", label: "Thông tin chính sách" },
-            { id: "Construction", label: "Tiến độ công trình" }
-          ].map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-3 py-1.5 font-sans text-xs rounded-lg whitespace-nowrap transition-all cursor-pointer ${
-                activeCategory === cat.id
-                  ? "bg-primary-dark text-white font-bold"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-600"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
+            { id: "Announcement", label: "Thông báo" },
+            { id: "Policy", label: "Chính sách" },
+            { id: "Construction", label: "Tiến độ" }
+          ].map((cat) => {
+            const isActive = activeCategory === cat.id;
+            const count = getCategoryCount(cat.id);
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-3.5 py-2 font-sans text-xs rounded-xl whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 font-bold ${
+                  isActive
+                    ? "bg-slate-900 text-white shadow-md shadow-slate-950/15"
+                    : "bg-slate-100 hover:bg-slate-200 text-slate-600"
+                }`}
+              >
+                <span>{cat.label}</span>
+                <span className={`px-1.5 py-0.2 rounded-full text-[9px] ${
+                  isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-500 font-bold"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      {/* Grid of articles list */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6.5 text-left">
-        {filteredArticles.map((art) => (
-          <div
-            key={art.id}
-            onClick={() => setSelectedArticle(art)}
-            className="group bg-white rounded-3xl border border-slate-150 overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+      {/* ── ARTICLES FEED PRESENTATION (FEATURED + GRID) ── */}
+      <div className="space-y-6">
+        
+        {/* Featured Post (Full-Bleed Header Design) */}
+        {featuredArticle && activeCategory === "all" && searchQuery === "" && (
+          <div 
+            onClick={() => setSelectedArticle(featuredArticle)}
+            className="group relative bg-white border border-slate-200 rounded-[36px] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer flex flex-col md:grid md:grid-cols-12 max-w-full text-left"
           >
-            <div className="h-44 overflow-hidden relative">
+            {/* Banner block */}
+            <div className="md:col-span-7 h-64 md:h-96 relative overflow-hidden shrink-0">
               <img
-                src={art.image}
-                alt={art.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                src={featuredArticle.image}
+                alt={featuredArticle.title}
+                className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
               />
-              <span className="absolute top-3 left-3 px-2.5 py-1 bg-white/90 backdrop-blur-sm rounded-full text-[9px] font-bold text-primary-dark tracking-wider border border-slate-200 uppercase">
-                {art.categoryLabel}
+              <div className="absolute inset-0 bg-gradient-to-r from-slate-900/40 to-transparent"></div>
+              
+              <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow border border-amber-400/20 z-10 animate-pulse">
+                <Sparkles className="w-3.5 h-3.5 text-white" /> Tin nổi bật
               </span>
             </div>
 
-            <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-              <div className="space-y-2">
-                <div className="flex items-center gap-1.5 text-slate-400 font-sans text-[10px] font-bold">
-                  <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                  <span>{art.date}</span>
-                  <span className="text-slate-300">•</span>
-                  <span>{art.author}</span>
+            {/* Content summary block */}
+            <div className="md:col-span-5 p-6 md:p-10 flex flex-col justify-between space-y-4 bg-gradient-to-br from-white to-slate-50/50">
+              <div className="space-y-3.5">
+                <div className="flex items-center gap-2.5 text-slate-400 font-sans text-[11px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded-full text-[9px] font-extrabold bg-blue-100 text-blue-700 shrink-0 select-none uppercase">
+                    {featuredArticle.categoryLabel}
+                  </span>
+                  <span>{featuredArticle.date}</span>
+                  <span>•</span>
+                  <span className="flex items-center gap-1 text-slate-500">
+                    <Clock className="w-3.5 h-3.5" />
+                    {Math.max(2, Math.ceil(featuredArticle.content.split(' ').length / 150))} phút đọc
+                  </span>
                 </div>
-                <h4 className="font-sans font-extrabold text-slate-900 text-xs sm:text-[13px] leading-snug group-hover:text-blue-700 transition-colors line-clamp-2">
-                  {art.title}
+                
+                <h4 className="font-sans font-black text-slate-900 text-md sm:text-lg md:text-[20px] leading-snug group-hover:text-blue-700 transition-colors">
+                  {featuredArticle.title}
                 </h4>
-                <p className="font-sans text-[11px] sm:text-xs text-slate-500 leading-relaxed line-clamp-3">
-                  {art.excerpt}
+                
+                <p className="font-sans text-xs text-slate-500 leading-relaxed line-clamp-4">
+                  {featuredArticle.excerpt}
                 </p>
               </div>
 
-              <div className="pt-2 border-t border-slate-50 flex items-center justify-between text-xs font-bold text-blue-700 group-hover:translate-x-1.5 transition-transform duration-300 self-start">
-                <span className="flex items-center gap-1">Đọc chi tiết <ArrowRight className="h-3 w-3" /></span>
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-black text-blue-700">
+                <div className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100/70 border border-blue-200/50 px-4 py-2 rounded-2xl transition">
+                  Đọc toàn văn <ArrowRight className="h-3.5 w-3.5 text-blue-700 group-hover:translate-x-1.5 transition-transform duration-300" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-400 italic">Sở Xây dựng ĐN</span>
               </div>
             </div>
           </div>
-        ))}
-      </div>
+        )}
 
-      {filteredArticles.length === 0 && (
-        <div className="py-16 text-center bg-white border border-dashed border-slate-200 rounded-3xl max-w-md mx-auto">
-          <FileText className="h-10 w-10 text-slate-400 mx-auto mb-2" />
-          <p className="font-sans font-semibold text-xs text-slate-700">Không tìm thấy tin tức tương ứng.</p>
-          <p className="font-sans text-[10px] text-slate-400 mt-1">Hãy đổi từ khóa tìm kiếm hoặc lọc danh mục khác.</p>
+        {/* Standard News Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-left">
+          {/* If looking at all news, standard list renders index 1+, otherwise we render everything if filtered */}
+          {(activeCategory !== "all" || searchQuery !== "" ? filteredArticles : standardArticles).map((art) => {
+            const estRead = Math.max(1, Math.ceil(art.content.split(' ').length / 150));
+            return (
+              <div
+                key={art.id}
+                onClick={() => setSelectedArticle(art)}
+                className="group bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+              >
+                <div className="h-48 overflow-hidden relative shrink-0">
+                  <img
+                    src={art.image}
+                    alt={art.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <span className="absolute top-4 left-4 px-3 py-1 bg-white/95 backdrop-blur-sm rounded-xl text-[10px] font-black text-slate-900 tracking-wider shadow border border-slate-100 uppercase flex items-center gap-1">
+                    <Tag className="w-3 h-3 text-blue-600" /> {art.categoryLabel}
+                  </span>
+                </div>
+
+                <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2.5">
+                    <div className="flex items-center gap-1.5 text-slate-400 font-sans text-[10.5px] font-bold">
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                      <span>{art.date}</span>
+                      <span className="text-slate-300">•</span>
+                      <span>{art.author}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-500 font-semibold">{estRead} phút đọc</span>
+                    </div>
+                    
+                    <h4 className="font-sans font-extrabold text-slate-900 text-xs sm:text-[13px] md:text-[14px] leading-snug group-hover:text-blue-700 transition-colors line-clamp-2">
+                      {art.title}
+                    </h4>
+                    
+                    <p className="font-sans text-[11px] sm:text-xs text-slate-500 leading-relaxed line-clamp-3">
+                      {art.excerpt}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-black text-blue-700 self-stretch">
+                    <span className="flex items-center gap-1 group-hover:translate-x-1 transition-transform">Đọc chi tiết <ArrowRight className="h-3.5 w-3.5" /></span>
+                    <span className="text-[10px] text-slate-400 font-medium">Bản tin nhanh</span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
-      )}
+
+        {/* Empty state fallback screen */}
+        {filteredArticles.length === 0 && (
+          <div className="py-20 text-center bg-white border border-dashed border-slate-200 rounded-[36px] max-w-lg mx-auto">
+            <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
+            <p className="font-sans font-extrabold text-xs text-slate-800 uppercase tracking-widest">Không tìm thấy bản tin tương ứng</p>
+            <p className="font-sans text-[10px] text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">Hãy thay đổi từ khóa lọc tìm kiếm hoặc nhấn nút mô phỏng n8n ở trên để tự sinh tin tức bằng AI ngay!</p>
+          </div>
+        )}
+
+      </div>
 
     </div>
   );

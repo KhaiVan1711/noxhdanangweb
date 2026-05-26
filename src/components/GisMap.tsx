@@ -25,6 +25,7 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
+  Flag,
 } from "lucide-react";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -227,6 +228,120 @@ function parsePrice(price: string): number {
   return n;
 }
 
+// ─── SOVEREIGN ISLANDS DATA & HELPERS ─────────────────────────────────────────
+
+const SOVEREIGN_ISLANDS = [
+  {
+    id: "hoang-sa",
+    name: "Quần đảo Hoàng Sa",
+    subName: "Huyện Hoàng Sa, Thành phố Đà Nẵng",
+    coords: [16.5, 112.0] as [number, number],
+    desc: "Quần đảo Hoàng Sa thuộc chủ quyền thiêng liêng và không thể tranh cãi của Việt Nam, được quản lý hành chính bởi UBND Huyện Hoàng Sa trực thuộc Thành phố Đà Nẵng.",
+    fact: "Cách đất liền khoảng 170 hải lý."
+  },
+  {
+    id: "truong-sa",
+    name: "Quần đảo Trường Sa",
+    subName: "Huyện Trường Sa, Tỉnh Khánh Hòa",
+    coords: [10.0, 114.5] as [number, number],
+    desc: "Quần đảo Trường Sa thuộc chủ quyền lãnh thổ thiêng liêng, máu thịt của Việt Nam, được quản lý hành chính bởi UBND Huyện Trường Sa trực thuộc Tỉnh Khánh Hòa.",
+    fact: "Tập hợp hàng trăm đảo nổi, đảo chìm, rạn san hô vô cùng quý báu."
+  }
+];
+
+function buildSovereignMarkerHtml(): string {
+  return `
+    <div class="sovereign-marker-container" style="
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #dc2626;
+      border: 3.5px solid #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(220, 38, 38, 0.5);
+      position: relative;
+    ">
+      <div class="island-ping" style="
+        position: absolute;
+        inset: -6px;
+        border-radius: 50%;
+        border: 2px solid #dc2626;
+        opacity: 0.5;
+      "></div>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="#fbbf24" stroke="#d97706" stroke-width="0.8">
+        <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" />
+      </svg>
+    </div>
+  `;
+}
+
+function buildSovereignPopupHtml(island: typeof SOVEREIGN_ISLANDS[0]): string {
+  return `
+    <div style="
+      min-width: 250px;
+      font-family: 'Be Vietnam Pro', system-ui, sans-serif;
+      padding: 6px 4px;
+    ">
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 6px;
+      ">
+        <span style="
+          background: #fef2f2;
+          color: #dc2626;
+          border: 1px solid #fee2e2;
+          font-size: 10px;
+          font-weight: 800;
+          padding: 2.5px 8px;
+          border-radius: 999px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        ">Khẳng định chủ quyền Việt Nam</span>
+      </div>
+      <div style="
+        font-size: 14.5px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 2px;
+        line-height: 1.3;
+      ">${island.name}</div>
+      <div style="
+        font-size: 11px;
+        font-weight: 700;
+        color: #ef4444;
+        margin-bottom: 8px;
+      ">${island.subName}</div>
+      <div style="
+        font-size: 11.5px;
+        color: #475569;
+        margin-bottom: 11px;
+        line-height: 1.45;
+      ">
+        ${island.desc}
+      </div>
+      <div style="
+        font-size: 10px;
+        color: #64748b;
+        border-top: 1px solid #f1f5f9;
+        padding-top: 8px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-style: italic;
+      ">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.5">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        ${island.fact}
+      </div>
+    </div>
+  `;
+}
+
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
 export function GisMap({
@@ -354,6 +469,23 @@ export function GisMap({
       if (isSelected) marker.openPopup();
     });
 
+    // Vẽ 2 quần đảo Hoàng Sa và Trường Sa khẳng định chủ quyền lãnh thổ Việt Nam
+    SOVEREIGN_ISLANDS.forEach((island) => {
+      const icon = L.divIcon({
+        html: buildSovereignMarkerHtml(),
+        className: "sovereign-island-marker",
+        iconSize: [34, 34],
+        iconAnchor: [17, 17],
+      });
+
+      const marker = L.marker(island.coords, { icon });
+      marker.addTo(layer);
+      marker.bindPopup(buildSovereignPopupHtml(island), {
+        className: "gis-popup",
+        maxWidth: 295,
+      });
+    });
+
     if (!selectedProject && bounds.length > 0) {
       map.fitBounds(bounds as L.LatLngBoundsExpression, { padding: [60, 60] });
     }
@@ -385,6 +517,15 @@ export function GisMap({
       map.flyTo(DANANG_CENTER, 12, { duration: 1 });
     }
   }, [selectedProject]);
+
+  const handleFlyToIslands = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo([13.5, 111.5], 6, {
+      duration: 1.5,
+      easeLinearity: 0.25
+    });
+  }, []);
 
   const handleLocateUser = useCallback(() => {
     const map = mapRef.current;
@@ -816,28 +957,38 @@ export function GisMap({
               {
                 icon: <ZoomIn className="w-4 h-4 text-slate-700" />,
                 onClick: handleZoomIn,
+                title: "Phóng to",
                 className: "bg-white hover:bg-slate-50 border border-slate-200",
               },
               {
                 icon: <ZoomOut className="w-4 h-4 text-slate-700" />,
                 onClick: handleZoomOut,
+                title: "Thu nhỏ",
                 className: "bg-white hover:bg-slate-50 border border-slate-200",
               },
               {
                 icon: <Compass className="w-4 h-4 text-slate-700" />,
                 onClick: handleReset,
+                title: "Đặt lại trọng tâm",
                 className: "bg-white hover:bg-slate-50 border border-slate-200",
               },
               {
                 icon: <LocateFixed className="w-4 h-4 text-white" />,
                 onClick: handleLocateUser,
-                className:
-                  "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200",
+                title: "Định vị của tôi",
+                className: "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200",
+              },
+              {
+                icon: <Flag className="w-4 h-4 text-red-600 animate-pulse" />,
+                onClick: handleFlyToIslands,
+                title: "Chủ Quyền Biển Đảo (Hoàng Sa - Trường Sa)",
+                className: "bg-red-50 hover:bg-red-100 border border-red-200 shadow-md shadow-red-200/20",
               },
             ].map((btn, i) => (
               <button
                 key={i}
                 onClick={btn.onClick}
+                title={btn.title}
                 className={`
                   w-10 h-10 md:w-11 md:h-11 rounded-2xl shadow-md
                   flex items-center justify-center

@@ -13,7 +13,13 @@ import {
   TrendingUp,
   X,
   Check,
-  AlertTriangle
+  AlertTriangle,
+  Copy,
+  Terminal,
+  Zap,
+  RefreshCw,
+  Cpu,
+  Sparkles
 } from "lucide-react";
 import { Project } from "../types";
 
@@ -61,6 +67,13 @@ export function AdminPanel() {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [savingConfig, setSavingConfig] = useState(false);
 
+  // n8n Integrations State
+  const [n8nWebhookToken, setN8nWebhookToken] = useState("");
+  const [editingToken, setEditingToken] = useState(false);
+  const [tempToken, setTempToken] = useState("");
+  const [isTestingN8n, setIsTestingN8n] = useState(false);
+  const [copySuccess, setCopySuccess] = useState<string | null>(null);
+
   const loadAllData = async () => {
     setLoading(true);
     try {
@@ -82,6 +95,8 @@ export function AdminPanel() {
         const configData = await resConfig.json();
         setMaskedKey(configData.geminiApiKeyMasked || "");
         setHasApiKey(configData.hasApiKey || false);
+        setN8nWebhookToken(configData.n8nWebhookToken || "");
+        setTempToken(configData.n8nWebhookToken || "");
       }
     } catch (err) {
       console.error("Lỗi đồng bộ dữ liệu:", err);
@@ -122,6 +137,61 @@ export function AdminPanel() {
   const showToast = (msg: string) => {
     setSuccessToast(msg);
     setTimeout(() => setSuccessToast(""), 3500);
+  };
+
+  const handleSaveN8nToken = async () => {
+    if (!tempToken.trim()) return;
+    try {
+      const res = await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ n8nWebhookToken: tempToken.trim() })
+      });
+      if (res.ok) {
+        setN8nWebhookToken(tempToken.trim());
+        setEditingToken(false);
+        showToast("Cập nhật Token Webhook n8n thành công!");
+      } else {
+        showToast("Không thể cập nhật cấu hình bảo mật.");
+      }
+    } catch (err) {
+      showToast("Lỗi kết nối máy chủ.");
+    }
+  };
+
+  const handleSimulateN8nPush = async () => {
+    setIsTestingN8n(true);
+    showToast("Đang kích hoạt n8n mô phỏng, gửi bài viết từ AI Agent...");
+    try {
+      const res = await fetch("/api/news/test-push", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.article) {
+          setNews(prev => [data.article, ...prev]);
+          showToast(`[n8n Webhook] Đăng tải tin tức tự động thành công: "${data.article.title}"`);
+          window.dispatchEvent(new CustomEvent("refresh-noxh-data"));
+        } else {
+          showToast("Đẩy tin mô phỏng thất bại.");
+        }
+      } else {
+        showToast("Yêu cầu Webhook bị máy chủ từ chối.");
+      }
+    } catch (err) {
+      showToast("Mất kết nối với dịch vụ mô phỏng n8n.");
+    } finally {
+      setIsTestingN8n(false);
+    }
+  };
+
+  const handleCopyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    setCopySuccess(label);
+    setTimeout(() => setCopySuccess(null), 2500);
   };
 
   useEffect(() => {
@@ -344,7 +414,7 @@ export function AdminPanel() {
           { id: "projects", label: "Quản lý Dự án", count: projects.length, icon: Building },
           { id: "news", label: "Quản lý Tin tức", count: news.length, icon: Newspaper },
           { id: "stats", label: "Chỉ số Thống kê", icon: Sliders },
-          { id: "config", label: "Cấu hình & API Key", icon: KeyRound }
+          { id: "config", label: "Cấu hình & Tích hợp n8n", icon: KeyRound }
         ].map((sub) => {
           const Icon = sub.icon;
           return (
@@ -719,6 +789,290 @@ export function AdminPanel() {
                 </form>
               </div>
             </div>
+
+            {/* SECTION 2: N8N AUTOMATION BOARD */}
+            <div className="border-t border-slate-100 pt-8 mt-8 space-y-6">
+              <div>
+                <h3 className="font-sans font-bold text-slate-800 text-sm md:text-base uppercase flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-emerald-500 animate-pulse" />
+                  KẾT NỐI TỰ ĐỘNG HÓA TIN TỨC VỚI N8N WEBHOOK
+                </h3>
+                <p className="text-xs text-slate-400 mt-1 font-medium">
+                  Cấu hình và liên kết robot tự động gửi bài viết trực tiếp thông qua Webhook API của hệ sinh thái n8n, Make hoặc Custom Crawler.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+                {/* Left Column: API Parameters Configuration */}
+                <div className="xl:col-span-5 space-y-5">
+                  <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase font-mono">1. THÔNG SỐ ĐẦU CUỐI WEBHOOK</span>
+                  
+                  <div className="bg-slate-50 border border-slate-200/60 rounded-3xl p-5 space-y-4">
+                    <div className="flex items-center justify-between pb-3 border-b border-slate-150">
+                      <span className="text-xs font-bold text-slate-500">Trạng thái Webhook:</span>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                        SẴN SÀNG NHẬN PUSH
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-black text-slate-500 block mb-1 uppercase tracking-wider">Webhook Endpoint URL (HTTP POST)</span>
+                      <div className="flex items-center bg-white p-2.5 rounded-xl border border-slate-200">
+                        <span className="font-mono text-[11px] text-slate-600 select-all truncate flex-1">
+                          {typeof window !== "undefined" ? window.location.origin : ""}/api/news
+                        </span>
+                        <button 
+                          type="button"
+                          onClick={() => handleCopyToClipboard(`${typeof window !== "undefined" ? window.location.origin : ""}/api/news`, "url")}
+                          className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+                          title="Sao chép URL"
+                        >
+                          {copySuccess === "url" ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-black text-slate-500 block mb-1 uppercase tracking-wider">X-Webhook-Token (Header Xác Thực)</span>
+                      <div className="flex gap-2">
+                        <div className="flex-1 flex items-center bg-white p-2.5 rounded-xl border border-slate-200">
+                          {editingToken ? (
+                            <input 
+                              type="text" 
+                              value={tempToken}
+                              onChange={(e) => setTempToken(e.target.value)}
+                              className="bg-transparent text-slate-800 font-mono text-[11px] w-full focus:outline-none"
+                              placeholder="Nhập khóa mã hóa bảo mật..."
+                            />
+                          ) : (
+                            <span className="font-mono text-[11px] text-slate-600 flex-1 truncate select-all">
+                              {n8nWebhookToken || "Chưa thiết lập (Mặc định)"}
+                            </span>
+                          )}
+                          {!editingToken && (
+                            <button 
+                              type="button"
+                              onClick={() => handleCopyToClipboard(n8nWebhookToken, "token")}
+                              className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-800 rounded-lg transition-colors cursor-pointer"
+                              title="Sao chép Token"
+                            >
+                              {copySuccess === "token" ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4" />}
+                            </button>
+                          )}
+                        </div>
+                        {editingToken ? (
+                          <div className="flex gap-1 shrink-0">
+                            <button 
+                              type="button"
+                              onClick={handleSaveN8nToken}
+                              className="bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs px-3 rounded-xl cursor-pointer"
+                            >
+                              Lưu
+                            </button>
+                            <button 
+                              type="button"
+                              onClick={() => { setEditingToken(false); setTempToken(n8nWebhookToken); }}
+                              className="bg-slate-200 text-slate-600 text-xs px-2.5 rounded-xl hover:bg-slate-300 font-bold"
+                            >
+                              Hủy
+                            </button>
+                          </div>
+                        ) : (
+                          <button 
+                            type="button"
+                            onClick={() => setEditingToken(true)}
+                            className="bg-slate-100 hover:bg-slate-200 text-slate-600 border border-slate-250 font-bold text-xs px-3.5 rounded-xl cursor-pointer transition-colors"
+                          >
+                            Đổi khóa
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 bg-[#f8fafc] border border-slate-200 rounded-3xl p-5">
+                    <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase font-mono">2. CHẠY THỬ NGHIỆM ĐỂ KIỂM TRA BOT</span>
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Kiểm nghiệm tính năng đẩy tin tức tức thì bằng cách kích hoạt gói n8n mô phỏng. Trợ lý AI thế hệ mới sẽ tự động viết một bản tin quy hoạch, kí số bằng Token bên trên, và đẩy trực tiếp vào bảng danh sách bài viết.
+                    </p>
+                    <button
+                      type="button"
+                      disabled={isTestingN8n}
+                      onClick={handleSimulateN8nPush}
+                      className={`w-full py-3 rounded-xl text-xs font-black tracking-wider uppercase flex items-center justify-center gap-2 shadow transition-all border transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer ${
+                        isTestingN8n 
+                          ? "bg-slate-200 border-slate-300 text-slate-400 cursor-not-allowed" 
+                          : "bg-gradient-to-r from-emerald-600 to-teal-700 border-emerald-500 hover:opacity-95 text-white"
+                      }`}
+                    >
+                      {isTestingN8n ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin text-white" />
+                          <span>MÔ PHỎNG ĐANG ĐẨY TIN...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 text-emerald-300 animate-pulse" />
+                          <span>KÍCH HOẠT PUSH MÔ PHỎNG</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right Column: Copy-Paste Workflow Area */}
+                <div className="xl:col-span-7 flex flex-col space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-black text-slate-400 tracking-widest font-mono flex items-center gap-1.5 uppercase">
+                      <Terminal className="w-4.5 h-4.5 text-emerald-600" />
+                      3. KỊCH BẢN N8N COMPATIBLE (JSON WORKFLOW)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyToClipboard(
+                        JSON.stringify({
+                          "meta": {
+                            "instanceId": "noxh_danang_n8n_integration_flow_2026"
+                          },
+                          "nodes": [
+                            {
+                              "parameters": {
+                                "url": "https://baodanang.vn/rss/nhadat",
+                                "options": {}
+                              },
+                              "id": "node-rss-reader",
+                              "name": "Đọc RSS Tin Bất Động Sản",
+                              "type": "n8n-nodes-base.rssFeedRead",
+                              "typeVersion": 1,
+                              "position": [100, 240]
+                            },
+                            {
+                              "parameters": {
+                                "model": "gemini-3.5-flash",
+                                "prompt": "Tóm tắt bài báo sau thành định dạng bài viết Nhà ở Xã hội Đà Nẵng, gửi lại đối tượng JSON với: title, excerpt, content, category (Policy hoặc Announcement hoặc Construction), categoryLabel, image (URL Unsplash), author."
+                              },
+                              "id": "node-gemini-ai",
+                              "name": "Gemini AI Chuẩn Hóa Tin",
+                              "type": "n8n-nodes-base.googleGemini",
+                              "typeVersion": 1,
+                              "position": [300, 240]
+                            },
+                            {
+                              "parameters": {
+                                "method": "POST",
+                                "url": `${typeof window !== "undefined" ? window.location.origin : ""}/api/news`,
+                                "sendHeaders": true,
+                                "headersTemplates": {
+                                  "X-Webhook-Token": n8nWebhookToken || "YOUR_TOKEN_HERE",
+                                  "Content-Type": "application/json"
+                                },
+                                "sendBody": true,
+                                "bodyParameters": {
+                                  "title": "={{$json.title}}",
+                                  "excerpt": "={{$json.excerpt}}",
+                                  "content": "={{$json.content}}",
+                                  "category": "={{$json.category}}",
+                                  "categoryLabel": "={{$json.categoryLabel}}",
+                                  "image": "={{$json.image}}",
+                                  "author": "={{$json.author}}"
+                                }
+                              },
+                              "id": "node-http-push",
+                              "name": "HTTP Push tới App NOXH",
+                              "type": "n8n-nodes-base.httpRequest",
+                              "typeVersion": 4,
+                              "position": [500, 240]
+                            }
+                          ]
+                        }, null, 2), "json"
+                      )}
+                      className="flex items-center gap-1.5 text-xs font-extrabold bg-[#00355f] hover:bg-opacity-95 text-white py-1.5 px-3.5 rounded-lg border border-blue-900 transition cursor-pointer shadow-sm"
+                    >
+                      {copySuccess === "json" ? (
+                        <><Check className="w-4 h-4 text-emerald-300" /> Đã sao chép!</>
+                      ) : (
+                        <><Copy className="w-4 h-4" /> Sao chép Kịch Bản XML/JSON</>
+                      )}
+                    </button>
+                  </div>
+
+                  <div className="relative flex-1 min-h-[250px] flex flex-col">
+                    <pre className="bg-slate-900 text-[10px] font-medium text-emerald-400/90 p-4 rounded-2xl overflow-x-auto h-[260px] scrollbar-thin select-all font-mono leading-relaxed border border-slate-800">
+                      <code>{
+                        JSON.stringify({
+                          "meta": {
+                            "instanceId": "noxh_danang_n8n_integration_flow_2026"
+                          },
+                          "nodes": [
+                            {
+                              "parameters": {
+                                "url": "https://baodanang.vn/rss/nhadat",
+                                "options": {}
+                              },
+                              "id": "node-rss-reader",
+                              "name": "Đọc RSS Tin Bất Động Sản",
+                              "type": "n8n-nodes-base.rssFeedRead",
+                              "typeVersion": 1,
+                              "position": [100, 240]
+                            },
+                            {
+                              "parameters": {
+                                "model": "gemini-3.5-flash",
+                                "prompt": "Tóm tắt bài báo sau thành định dạng bài viết Nhà ở Xã hội Đà Nẵng, gửi lại đối tượng JSON với: title, excerpt, content, category (Policy hoặc Announcement hoặc Construction), categoryLabel, image (URL Unsplash), author."
+                              },
+                              "id": "node-gemini-ai",
+                              "name": "Gemini AI Chuẩn Hóa Tin",
+                              "type": "n8n-nodes-base.googleGemini",
+                              "typeVersion": 1,
+                              "position": [300, 240]
+                            },
+                            {
+                              "parameters": {
+                                "method": "POST",
+                                "url": `${typeof window !== "undefined" ? window.location.origin : ""}/api/news`,
+                                "sendHeaders": true,
+                                "headersTemplates": {
+                                  "X-Webhook-Token": n8nWebhookToken || "YOUR_TOKEN_HERE",
+                                  "Content-Type": "application/json"
+                                },
+                                "sendBody": true,
+                                "bodyParameters": {
+                                  "title": "={{$json.title}}",
+                                  "excerpt": "={{$json.excerpt}}",
+                                  "content": "={{$json.content}}",
+                                  "category": "={{$json.category}}",
+                                  "categoryLabel": "={{$json.categoryLabel}}",
+                                  "image": "={{$json.image}}",
+                                  "author": "={{$json.author}}"
+                                }
+                              },
+                              "id": "node-http-push",
+                              "name": "HTTP Push tới App NOXH",
+                              "type": "n8n-nodes-base.httpRequest",
+                              "typeVersion": 4,
+                              "position": [500, 240]
+                            }
+                          ]
+                        }, null, 2)
+                      }</code>
+                    </pre>
+                    <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-slate-900 to-transparent pointer-events-none rounded-b-2xl"></div>
+                  </div>
+
+                  <div className="bg-blue-50/45 border border-blue-100 rounded-2xl p-4">
+                    <div className="flex gap-3 items-start text-xs text-blue-950">
+                      <AlertTriangle className="w-5 h-5 text-blue-700 shrink-0 mt-0.5" />
+                      <div className="leading-relaxed font-semibold">
+                        <strong className="text-blue-900">Cách cài đặt trong n8n Dashboard của bạn:</strong> Đăng nhập trang quản trị n8n của bạn &gt; Tạo một Workflow trống mới &gt; Nhấn tổ hợp phím <strong className="text-blue-800">Ctrl + V</strong> (hoặc Cmd + V trên Mac) trực tiếp trên canvas trống để dán và khôi phục toàn bộ các node tự động hóa này chỉ trong 1 giây!
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
           </div>
         )}
 

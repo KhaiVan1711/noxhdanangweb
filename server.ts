@@ -365,6 +365,21 @@ app.post("/api/news", (req, res) => {
     if (!db.news) db.news = [];
     const item = req.body;
 
+    // Optional Check for External/Webhook clients (e.g. n8n push automation)
+    const clientToken = req.headers["x-webhook-token"] || 
+                        (req.headers["authorization"] ? req.headers["authorization"].toString().replace(/^Bearer\s+/i, "") : null) || 
+                        req.query.token;
+
+    // If an n8n webhook token is configured in the database, and the client specifies a token, or has no Referer (meaning external webhook)
+    const isWebhook = !req.headers["referer"] || clientToken;
+    if (db.n8nWebhookToken && isWebhook) {
+      if (clientToken !== db.n8nWebhookToken) {
+        return res.status(401).json({ 
+          error: "Xác thực Webhook thất bại! Webhook Token không khớp hoặc chưa được cung cấp qua header 'X-Webhook-Token'." 
+        });
+      }
+    }
+
     if (!item.title) {
       return res.status(400).json({ error: "Tiêu đề là bắt buộc" });
     }
@@ -425,15 +440,23 @@ app.get("/api/config", (req, res) => {
   if (apiKey) {
     masked = apiKey.length > 8 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
   }
+
+  // Generate a default n8n news webhook token if not already present
+  if (!db.n8nWebhookToken) {
+    db.n8nWebhookToken = "noxh_danang_secret_n8n_token_" + Math.random().toString(36).substring(2, 8);
+    writeDb(db);
+  }
+
   res.json({
     geminiApiKeyMasked: masked,
-    hasApiKey: !!apiKey
+    hasApiKey: !!apiKey,
+    n8nWebhookToken: db.n8nWebhookToken
   });
 });
 
 app.post("/api/config", (req, res) => {
   try {
-    const { geminiApiKey } = req.body;
+    const { geminiApiKey, n8nWebhookToken } = req.body;
     const db = readDb();
     
     if (geminiApiKey !== undefined) {
@@ -442,9 +465,153 @@ app.post("/api/config", (req, res) => {
       process.env.GEMINI_API_KEY = cleanedKey;
       console.log("[Config Update] New Gemini API Key received through Admin Panel.");
     }
+
+    if (n8nWebhookToken !== undefined) {
+      db.n8nWebhookToken = n8nWebhookToken.trim();
+      console.log("[Config Update] New n8n Webhook Token saved:", db.n8nWebhookToken);
+    }
     
     writeDb(db);
-    res.json({ success: true, hasApiKey: !!(process.env.GEMINI_API_KEY || db.geminiApiKey) });
+    res.json({ 
+      success: true, 
+      hasApiKey: !!(process.env.GEMINI_API_KEY || db.geminiApiKey),
+      n8nWebhookToken: db.n8nWebhookToken 
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Helper templates for fast n8n fallback simulated push
+function getMockNewsTemplates() {
+  return [
+    {
+      title: "Khởi công Block C chung cư NOXH Liên Chiểu đón 800 hộ dân công nghiệp",
+      excerpt: "Sáng nay, dự án căn hộ thu nhập thấp tại Phường Hòa Khánh đã chính thức khởi công tháp thứ 3 nâng tổng quy mô quỹ nhà lên 1.500 căn.",
+      content: `Dự án mở rộng tháp C của cụm nhà ở xã hội Liên Chiểu đã chính thức nhận quyết định phê duyệt khởi công sáng nay.\n\nĐại diện Ban quản lý hạ tầng đô thị Đà Nẵng thông báo, tháp C gồm 18 tầng nổi và 1 bán hầm sẽ cung ứng thêm khoảng 800 căn hộ diện tích hợp lý từ 48m² đến 65m² dành cho đối tượng chính là công nhân khu công nghiệp Hòa Khánh.\n\nTập đoàn Liên doanh xây dựng cam kết áp dụng công nghệ cốp pha trượt hiện đại để rút ngắn thời gian xây dựng còn 14 tháng, bảo đảm tiến độ bàn giao chìa khóa trao tay vào quý III năm 2027.`,
+      category: "Construction",
+      categoryLabel: "Tiến Độ Dự Án",
+      image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+      author: "Phòng Dự án - Sở Xây dựng Đà Nẵng (n8n automated)"
+    },
+    {
+      title: "Hỗ trợ vay 4.8%/năm mua nhà ở xã hội từ gói tín dụng ưu đãi 120.000 tỷ",
+      excerpt: "Ngân hàng Chính sách Xã hội Chi nhánh Đà Nẵng bổ sung hạn mức vay mua nhà ở xã hội lên đến 25 năm cho các cặp vợ chồng trẻ.",
+      content: `Sở Xây dựng Đà Nẵng phối hợp cùng Ngân hàng Chính sách Xã hội công bố chương trình tăng hạn mức và nới lỏng điều kiện tiếp cận nguồn vốn vay ưu đãi.\n\nTheo đó, lãi suất cho vay hỗ trợ tạo lập nhà ở xã hội sẽ giữ ổn định ở mức 4.8%/năm. Thời gian vay được kéo dài tối đa lên tới 25 năm nhằm đảm bảo mỗi tháng gia đình chỉ phải chi trả gốc lãi dao động từ 3 - 5 triệu đồng, phù hợp túi tiền của người lao động phổ thông.\n\nHồ sơ bao gồm Đơn đăng ký theo mẫu của Ngân hàng kèm xác nhận thực trạng chưa sở hữu đất ở của UBND Phường nơi đăng trú.`,
+      category: "Policy",
+      categoryLabel: "Kính Gửi Cử Tri",
+      image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
+      author: "Ngân hàng Chính sách Xã hội VN (n8n automated)"
+    },
+    {
+      title: "Nghiêm cấm bán chênh, sang nhượng suất mua nhà xã hội sai đối tượng",
+      excerpt: "Thanh tra thành phố ban hành chỉ thị rà soát kiểm tra toàn diện 10 khu chung cư xã hội đã bàn giao để xử lý các chung cư mua bán sang tay.",
+      content: `Chiều qua, Thanh tra Sở Xây dựng Đà Nẵng đã có văn bản hỏa tốc đôn đốc chấn chỉnh việc mua bán lại căn hộ tại các khu dự án thu nhập thấp.\n\nTheo Luật Nhà ở hiện hành, căn hộ thuộc diện ưu đãi bất động sản xã hội chỉ được phép bán lại sau tối thiểu 05 năm kể từ ngày hoàn tất tiền mua và được cấp Sổ hồng. Mọi giao dịch bằng Giấy viết phôi tay, Văn bản ủy quyền lập lờ tại văn phòng công chứng tự do đều không có giá trị pháp lý và sẽ bị cưỡng chế thu hồi lại nhà lập tức.\n\nĐường dây nóng của Sở (0236.3822123) sẵn sằng tiếp nhận tố giác của công dân từ hôm nay.`,
+      category: "Announcement",
+      categoryLabel: "Cảnh Giác Cao",
+      image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800",
+      author: "Thanh tra Sở Xây dựng Đà Nẵng (n8n automated)"
+    }
+  ];
+}
+
+// n8n Automated News Webhook simulator using Gemini AI or Local fallback templates
+app.post("/api/news/test-push", async (req, res) => {
+  try {
+    const db = readDb();
+    
+    let title = "";
+    let excerpt = "";
+    let content = "";
+    let category: "Policy" | "Announcement" | "Construction" = "Policy";
+    let categoryLabel = "Thông tin chính sách";
+    let image = "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800";
+    let author = "Sở Xây dựng Đà Nẵng (AI n8n push)";
+
+    let apiKey = process.env.GEMINI_API_KEY || db.geminiApiKey;
+    if (apiKey) {
+      apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
+    }
+
+    if (apiKey && apiKey !== "AIzaSy..." && apiKey !== "") {
+      try {
+        const ai = getAIClient();
+        const prompt = `Bạn là biên tập viên tin tức cho cổng thông tin Nhà Ở Xã Hội Sở Xây dựng Đà Nẵng. 
+Hãy viết một bài báo hoàn toàn MỚI, cực kỳ thời sự về tiến độ xây dựng căn hộ hoặc hướng dẫn làm thủ tục nộp hồ sơ nhà ở xã hội (NOXH) tại Đà Nẵng năm 2026.
+Hãy xuất kết quả dưới dạng JSON object hợp lệ chứa các trường sau:
+{
+  "title": "Tiêu đề bài viết hấp dẫn, thời sự",
+  "excerpt": "Đoạn trích tóm tắt ngắn từ 1-2 câu",
+  "content": "Nội dung chi tiết của bài viết, có phân tách đoạn bằng dấu xuống dòng. Độ dài khoảng 3-4 đoạn.",
+  "category": "Chọn một trong 3 giá trị: 'Policy' hoặc 'Announcement' hoặc 'Construction'",
+  "categoryLabel": "Nhãn tương ứng tiếng Việt (ví dụ: 'Điểm tin tiến độ', 'Văn bản chính sách', 'Thông báo nóng')",
+  "image": "Một cấu hình ảnh Unsplash ngẫu nhiên về thành phố hoặc tòa nhà, ví dụ: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800'",
+  "author": "Phòng Thông tin - Sở Xây dựng Đà Nẵng"
+}
+Chú ý: Vui lòng TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không có markdown block hay rác ký tự ngoài JSON.`;
+
+        const responseObj = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: prompt,
+          config: {
+            temperature: 0.8,
+            responseMimeType: "application/json"
+          }
+        });
+
+        const generatedText = responseObj.text;
+        if (generatedText) {
+          const parsed = JSON.parse(generatedText.trim());
+          title = parsed.title || "Chính sách đăng ký NOXH Đà Nẵng đổi mới";
+          excerpt = parsed.excerpt || "Sở Xây dựng Đà Nẵng chuẩn bị điều chỉnh thủ tục làm hồ sơ nộp trực tuyến.";
+          content = parsed.content || "Nội dung đang được cập nhật.";
+          category = (parsed.category || "Policy") as any;
+          categoryLabel = parsed.categoryLabel || "Thông tin chính sách";
+          image = parsed.image || image;
+          author = parsed.author || author;
+        }
+      } catch (err) {
+        console.error("Lỗi tạo tin bằng AI:", err);
+        const templates = getMockNewsTemplates();
+        const t = templates[Math.floor(Math.random() * templates.length)];
+        title = t.title;
+        excerpt = t.excerpt;
+        content = t.content;
+        category = t.category as any;
+        categoryLabel = t.categoryLabel;
+        image = t.image;
+        author = t.author;
+      }
+    } else {
+      const templates = getMockNewsTemplates();
+      const t = templates[Math.floor(Math.random() * templates.length)];
+      title = t.title;
+      excerpt = t.excerpt;
+      content = t.content;
+      category = t.category as any;
+      categoryLabel = t.categoryLabel;
+      image = t.image;
+      author = t.author;
+    }
+
+    if (!db.news) db.news = [];
+    
+    const newArticle = {
+      id: "news-" + Date.now(),
+      title,
+      excerpt,
+      content,
+      date: new Date().toLocaleDateString("vi-VN"),
+      category,
+      categoryLabel,
+      image,
+      author
+    };
+
+    db.news.unshift(newArticle);
+    writeDb(db);
+
+    res.json({ success: true, article: newArticle });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
