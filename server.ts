@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import https from "https";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
@@ -110,6 +111,95 @@ Hãy xưng là "NOXH Bot", xưng hô lễ phép "Dạ chào anh/chị", "Dân c�
     res.write(`data: ${JSON.stringify({ text: errText })}\n\n`);
     res.write('data: [DONE]\n\n');
     res.end();
+  }
+});
+
+// Google Photos Dynamic Background Image Resolver
+let cachedHeroImage: string | null = null;
+const FALLBACK_HERO_IMAGE = "https://lh3.googleusercontent.com/aida-public/AB6AXuBwaHQxPL8wE7n0P-S5o6noejMX_782tx-fBGFeDWqPKD28JLI3zMiMI0FaZ6WtMbJsKj4PmRR22LFkHcChBWAkuwhzsONN6NENAuJzlY04oYSx7YrgR56rSsL3Q_3K3u4lR-tG6rGBfEl7Dmn3xsz_46gda4xC79cNrt54sOehUPphSaziSheIc9FBXz7jbKVwfG7JaQ76vTZX2A9cJsv6K5BLvjIkWpldRL7d73q4fVGQn76R7ymGo9Mcpf_RFf0sZYyyOHl6tUF89w";
+const GOOGLE_PHOTOS_LINK = "https://photos.app.goo.gl/Hoz454CvAVf1tP4G8";
+
+function resolveGooglePhotos(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const handleRequest = (currentUrl: string, depth = 0) => {
+      if (depth > 5) {
+        return reject(new Error("Too many redirects"));
+      }
+
+      const req = https.get(currentUrl, {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        }
+      }, (res) => {
+        if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          handleRequest(res.headers.location, depth + 1);
+        } else if (res.statusCode === 200) {
+          let data = "";
+          res.on("data", (chunk) => {
+            data += chunk;
+            if (data.length > 5 * 1024 * 1024) {
+              req.destroy();
+            }
+          });
+          res.on("end", () => {
+            const ogImageMatch = data.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || 
+                                 data.match(/<meta\s+content=["']([^"']+)["']\s+property=["']og:image["']/i);
+            if (ogImageMatch) {
+              resolve(ogImageMatch[1]);
+            } else {
+              const lhMatch = data.match(/(https:\/\/lh\d+\.googleusercontent\.com\/[^\s"',]+)/);
+              if (lhMatch) {
+                resolve(lhMatch[1]);
+              } else {
+                reject(new Error("No image found in content"));
+              }
+            }
+          });
+        } else {
+          reject(new Error(`Bad status: ${res.statusCode}`));
+        }
+      });
+
+      req.on("error", (err) => {
+        reject(err);
+      });
+
+      req.setTimeout(4000, () => {
+        req.destroy(new Error("Timeout during resolving"));
+      });
+    };
+
+    handleRequest(url);
+  });
+}
+
+function updateHeroImageCache() {
+  resolveGooglePhotos(GOOGLE_PHOTOS_LINK)
+    .then((url) => {
+      console.log("[Hero Caching] Resolved beautiful custom banner successfully:", url);
+      cachedHeroImage = url;
+    })
+    .catch((err) => {
+      console.log("[Hero Caching] Resolution failed, but will retry:", err.message);
+    });
+}
+
+// Perform initial lookup
+updateHeroImageCache();
+// Refresh every 30 minutes to bypass any asset expiration token issues from Google CDN
+setInterval(updateHeroImageCache, 30 * 60 * 1000);
+
+app.get("/api/hero-image", async (req, res) => {
+  if (cachedHeroImage) {
+    return res.redirect(cachedHeroImage);
+  }
+  try {
+    const url = await resolveGooglePhotos(GOOGLE_PHOTOS_LINK);
+    cachedHeroImage = url;
+    return res.redirect(url);
+  } catch (err: any) {
+    console.error("[Hero Router] Error resolving immediately, redirecting to fallback:", err.message);
+    return res.redirect(FALLBACK_HERO_IMAGE);
   }
 });
 
