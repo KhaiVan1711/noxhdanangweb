@@ -1,0 +1,206 @@
+{
+  "projects": [
+    {
+      "id": "hoa-khanh",
+      "name": "NOXH Khu công nghiệp Hòa Khánh",
+      "location": "Đường số 4, KCN Hòa Khánh, Phường Hòa Khánh Bắc, Đà Nẵng",
+      "investor": "Công ty Cổ phần Địa ốc Xanh Sài Gòn Thuận Phước",
+      "status": "Đang nhận hồ sơ",
+      "price": "~9.4tr/m²",
+      "priceRaw": 9400005,
+      "progress": 80,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuClHteteBIbuLZyM10AFJQ6Vm9yEguYn8Qs7clGFwM6zDxRP-74dGICejZqhjdCbHvRFksQ7ZphNCcoxaXJ9P5qUF5VroQL07ZCZtV7HuqWONejByAwAjX9AvX4xaa9HvIVYG20hOYS1i2jovOGFTeL0tBLDsijo14Nms_e0DzJQ-QhXLPy7k1ShHaz-chG18MXjpzfhxNAlA31LSzYF7OeSDG7T_31W67WWmMacR1OCZSSoGYCdEqnk1eXboXQjfmf82lLGsueeA",
+      "tag": "receiving",
+      "coordinates": { "x": 35, "y": 42 },
+      "lat": 16.07185,
+      "lng": 108.14777,
+      "districts": "Phường Hòa Khánh Bắc",
+      "scale": "8 block chung cư cao từ 12-15 tầng với gần 2,000 căn hộ",
+      "types": "Căn hộ 1-2 phòng ngủ, diện tích từ 32m² đến 66m²",
+      "deadline": "Dự kiến bàn giao tháp tiếp theo vào Quý IV/2026",
+      "hotline": "(0236) 3789 123",
+      "requirements": [
+        "Chưa sở hữu đất đai hoặc nhà ở tại Đà Nẵng",
+        "Thu nhập không đóng thuế thu nhập cá nhân thường xuyên",
+        "Có đăng ký thường trú hoặc tạm trú trên 1 năm kèm tham gia BHXH tại Đà Nẵng"
+      ]
+    },
+    {
+      "id": "bau-tram",
+      "name": "The Ori Garden (Bàu Tràm)",
+      "location": "Khu đô thị xanh Bàu Tràm Lakeside, Phường Hòa Hiệp Nam, Đà Nẵng",
+      "investor": "Công ty Cổ phần Đầu tư Sài Gòn - Đà Nẵng (SDI)",
+      "status": "Sắp mở bán",
+      "price": "~12.5tr/m²",
+      "priceRaw": 12500000,
+      "progress": 40,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD7YJE3WIsO4fvd_AO7OmBTPkI-ZDWdiubJExkNJLnMq8VtNgUSoYxibQ5zVCTwfUs04KXiqd2_cbzbTdFeGFk4gLn2_AEc38-uBavo7ou3TT-qySuBE-1NU4kYvxRIYOxfPWAWjZYOl3P5AE-0H6mkQw9ardc8CyQF8OxjGV2tKx8OLe59A4-jri_C2yJPvLBRb7d7-mNOHdFilb8vvxmHE3usclVcwD9RmH4pqHbx1QEekC4cnd0bDh5ydfv9uaiy9H6rfPV_th8",
+      "tag": "coming_soon",
+      "coordinates": { "x": 30, "y": 48 },
+      "lat": 16.08889,
+      "lng": 108.14300,
+      "districts": "Phường Hòa Hiệp Nam",
+      "scale": "Hơn 3,000 căn hộ chất lượng cao phong cách Nhật Bản với hệ sinh thái khép kín",
+      "types": "Căn hộ từ 35.3m² đến 70m² (Studio, 1 PN + 1, 2 PN, 3 PN)",
+      "deadline": "Dự kiến mở bán giai đoạn 2 vào tháng 8/2026",
+      "hotline": "(0236) 3999 888",
+      "requirements": [
+        "Chưa từng đứng tên sở hữu đất nền hay nhà ở tại địa bàn TP. Đà Nẵng",
+        "Là công nhân, viên chức, cán bộ hoặc người lao động tự do có thu nhập thấp dưới quy định",
+        "Thủ tục đăng ký xét duyệt và tính điểm ưu tiên thông qua Sở Xây dựng Đà Nẵng"
+      ]
+    },
+    {
+      "id": "nai-hien-dong",
+      "name": "Chung cư thu nhập thấp Nại Hiên Đông",
+      "location": "Phường Nại Hiên Đông, Đà Nẵng",
+      "investor": "Công ty Cổ phần Đầu tư và Phát triển Nhà Đà Nẵng",
+      "status": "Đã bàn giao",
+      "price": "Đã hết quỹ",
+      "priceRaw": 8500000,
+      "progress": 100,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuASYE2FhNKpl8F_zuy1X8hjyLCbWY66kSKmP4q5ONDxLl9Y-NBt3D7omVwbuoxIhw7JxLEfR5oy9B7bm6c2JwS5FhWZr4DdQ334SJDw6Nd6wb_n0vv8owtIAdxmdQ4xtGO85QLmczzYV2k6IG6MXtHVEy_x3HQXI81W3mjQt52ym6uuWx2jMA2Ynz_aDLTxX73IVMTWPGZrFAw3GTTf5kyy2-OeDESxVFC1oBEPk779WUB38z6niHZOOCM9b-fvzjz6B8aIys3Vo5k",
+      "tag": "completed",
+      "coordinates": { "x": 65, "y": 32 },
+      "lat": 16.09631,
+      "lng": 108.23277,
+      "districts": "Phường Nại Hiên Đông",
+      "scale": "5 block chung cư cao từ 7-12 tầng phục vụ người có thu nhập thấp tại Phường Nại Hiên Đông",
+      "types": "Diện tích căn hộ trung bình từ 45m² đến 60m² rộng rãi",
+      "deadline": "Đã hoàn thành bàn giao và đi vào vận hành ổn định lâu dài",
+      "hotline": "(0236) 3111 222",
+      "requirements": [
+        "Chính sách ưu tiên cho hộ nghèo giải tỏa tái định cư tại Phường Nại Hiên Đông",
+        "Người dân thuộc diện chính sách được phê duyệt đặc biệt của thành phố",
+        "Hiện được vận hành ổn định bởi Ban quản lý Nhà chung cư Đà Nẵng"
+      ]
+    },
+    {
+      "id": "an-phu-dong",
+      "name": "NOXH An Phú Đông",
+      "location": "Phường Hòa Thọ Đông, Đà Nẵng",
+      "investor": "Sở Xây dựng Đà Nẵng phối hợp Liên minh HTX",
+      "status": "Sắp mở bán",
+      "price": "~11.8tr/m²",
+      "priceRaw": 11800000,
+      "progress": 15,
+      "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+      "tag": "coming_soon",
+      "coordinates": { "x": 45, "y": 70 },
+      "lat": 16.01429,
+      "lng": 108.19634,
+      "districts": "Phường Hòa Thọ Đông",
+      "scale": "Dự án gồm 2 tòa tháp hiện đại cao 15 tầng với khuôn viên xanh mát, bãi đỗ xe rộng rãi",
+      "types": "Diện tích từ 40m² đến 65m² (1-2 phòng ngủ, tối ưu ánh sáng tự nhiên)",
+      "deadline": "Dự kiến bàn giao vào Quý I/2028, nhận hồ sơ thẩm định trước tháng 12/2026",
+      "hotline": "(0236) 3888 777",
+      "requirements": [
+        "Ưu tiên công chức, viên chức trẻ làm việc tại trung tâm hành chính công",
+        "Hộ gia đình có hoàn cảnh khó khăn chưa sở hữu đất và tài sản gắn liền với đất tại TP. Đà Nẵng",
+        "Nộp đơn đăng ký kèm giấy xác nhận nhà ở thông qua tổ dân phố và Phường Hòa Thọ Đông"
+      ]
+    },
+    {
+      "id": "nam-cau-tuyen-son",
+      "name": "Chung cư Xã hội Nam Cầu Tuyên Sơn",
+      "location": "Khu đô thị Nam Cầu Tuyên Sơn, Phường Khuê Mỹ, Đà Nẵng",
+      "investor": "Tập đoàn Đầu tư Đất Xanh Miền Trung và thành phố",
+      "status": "Đang nhận hồ sơ",
+      "price": "~14.2tr/m²",
+      "priceRaw": 14200000,
+      "progress": 90,
+      "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+      "tag": "receiving",
+      "coordinates": { "x": 72, "y": 55 },
+      "lat": 16.02708,
+      "lng": 108.23594,
+      "districts": "Phường Khuê Mỹ",
+      "scale": "Thiết kế thông minh lồng ghép khu thương mại nhỏ, công viên và nhà cộng đồng",
+      "types": "Căn hộ 2 phòng ngủ diện tích đa dạng từ 48m² - 68m²",
+      "deadline": "Bàn giao căn hộ đầu tiên vào tháng 10/2026, đợt nhận hồ sơ cuối kết thúc ngày 30/08/2026",
+      "hotline": "(0236) 3555 444",
+      "requirements": [
+        "Người lao động cư trú tại Phường Khuê Mỹ hoặc lân cận",
+        "Có đóng bảo hiểm xã hội tại TP. Đà Nẵng tối thiểu 12 tháng liên tục",
+        "Bảo đảm điều kiện thu nhập không thuộc đối tượng nộp thuế TNCN đóng tại địa phương"
+      ]
+    },
+    {
+      "id": "lien-chieu-eco",
+      "name": "Nhà ở xã hội Eco Home",
+      "location": "Phường Hòa Khánh Bắc, Đà Nẵng",
+      "investor": "Tập đoàn đầu tư Địa ốc Eco Việt Nam",
+      "status": "Sắp mở bán",
+      "price": "~10.5tr/m²",
+      "priceRaw": 10500000,
+      "progress": 25,
+      "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800",
+      "tag": "coming_soon",
+      "coordinates": { "x": 25, "y": 35 },
+      "lat": 16.07542,
+      "lng": 108.13689,
+      "districts": "Phường Hòa Khánh Bắc",
+      "scale": "Khu chung cư phức hợp gồm 3 block căn hộ tiện nghi với hồ bơi và khu vui chơi ngoài trời cho bé",
+      "types": "Diện tích linh hoạt từ 45m² đến 62m² tinh tế, chuẩn xanh",
+      "deadline": "Dự kiến bàn giao tháp A vào Quý II/2027",
+      "hotline": "(0236) 3666 999",
+      "requirements": [
+        "Người dân chưa sở hữu nhà tại địa bàn thành phố",
+        "Có thu nhập thực tế trung bình dưới 11 triệu đồng/tháng của cá nhân đăng ký",
+        "Xem xét các điểm ưu tiên như đóng góp xã hội, gia đình chính sách hoặc hoàn cảnh đặc biệt"
+      ]
+    }
+  ],
+  "news": [
+    {
+      "id": "news-1",
+      "title": "Đà Nẵng công bố đề án phát triển 10.000 căn hộ nhà ở xã hội đến năm 2030",
+      "excerpt": "UBND thành phố vừa thông qua lộ trình phân bổ quỹ đất xây dựng định hướng chuỗi dự án trọng vùng tại Phường Hòa Khánh Bắc, Hòa Hiệp Nam, Khuê Mỹ nhằm đảm bảo nơi an cư cho người lao động, gia đình cận nghèo địa phương.",
+      "content": "Chiều ngày 20/5/2026, UBND TP. Đà Nẵng đã chính thức ký duyệt Đề án quy hoạch tổng thể nhà ở xã hội (NOXH) giai đoạn 2026 - 2030. \n\nMục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 10.000 căn hộ chất lượng cao với các chính sách trợ giá hấp dẫn. Trong đó, tập trung khai thác đồng bộ các khu đô thị vệ tinh xung quanh khu công nghiệp Hòa Khánh, khu công nghệ cao Đà Nẵng và dọc theo các trục giao thông chính của thành phố.\n\nPhòng Quản lý đô thị sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.",
+      "date": "20/05/2026",
+      "category": "Announcement",
+      "categoryLabel": "Thông Báo Sửa",
+      "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+      "author": "Ban Quản lý NOXH Đà Nẵng"
+    },
+    {
+      "id": "news-2",
+      "title": "Hướng dẫn xác nhận điều kiện nhà ở bình quân đạt chuẩn dưới 15m² sàn/người",
+      "excerpt": "Cẩm nang chi tiết hướng dẫn công dân nộp đơn trực tiếp tại cơ quan UBND Phường/Xã để lấy đóng dấu mộc xác nhận diện tích nhà ở bình quân theo Nghị định số 54/2026/NĐ-CP mới ban hành.",
+      "content": "Theo Nghị định số 54/2026/NĐ-CP của Chính phủ chính thức áp dụng sửa đổi Luật Nhà ở, điều kiện về thực trạng nhà ở của hộ gia đình chính thức nâng hạn mức diện tích bình quân đầu người lên tối đa 15 m² sàn/người (thay vì 10 m² sàn như quy định cũ).\n\nĐây là tin vui lớn, mở rộng cửa cho hàng nghìn hộ gia đình khó khăn có đông con em sinh sống chen chúc tại khu vực đô thị Đà Nẵng có cơ hội tiếp cận NOXH.\n\n**Quy trình hồ sơ xin xác nhận:**\n1. Người đứng đơn tải xuống Mẫu Đơn xác nhận diện tích nhà ở bình quân (Mẫu 03 Phụ lục Nghị định).\n2. Kê khai đúng danh sách thành viên cùng đăng ký thường trú tại căn nhà hiện tại.\n3. Nộp hồ sơ tại UBND cấp Xã/Phường nơi đăng ký thường trú. UBND cấp xã có nhiệm vụ xác minh thực tế, phản hồi giải quyết đóng dấu đỏ phê duyệt trong thời hạn tối đa 07 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ.",
+      "date": "14/05/2026",
+      "category": "Policy",
+      "categoryLabel": "Phân Tích Chính Sách",
+      "image": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
+      "author": "Phòng Quản lý nhà và thị trường Bất Động Sản"
+    },
+    {
+      "id": "news-3",
+      "title": "Danh sách bốc thăm đợt 1 dự án chung cư NOXH tại Phường Hòa Khánh Bắc",
+      "excerpt": "Công khai kết quả thẩm định điểm và công bố số lượng căn hộ bốc thăm cụ thể thuộc Dự án Căn hộ Sun Garden Phường Hòa Khánh Bắc. Tổng cộng có 350 căn hoàn tất bàn giao kỹ thuật.",
+      "content": "Ban Quản lý phát triển đô thị thành phố Đà Nẵng đã nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.\n\nDự án Sun Garden ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó ban quản lý đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).\n\nBuổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám sát trực tiếp của cơ quan thanh tra thành phố vào sáng ngày 01/06/2026 tại Nhà văn hóa Phường Hòa Khánh Bắc và truyền hình trực tuyến qua cổng dữ liệu thông tin đại chúng.",
+      "date": "05/05/2026",
+      "category": "Construction",
+      "categoryLabel": "Tiến Độ Dự Án",
+      "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+      "author": "Hội đồng Thẩm định dự án Đà Nẵng"
+    },
+    {
+      "id": "news-4",
+      "title": "Cảnh báo mạo danh chuyên viên ban ngành Sở để nhận tiền 'cọc giữ chỗ' nhà ở xã hội",
+      "excerpt": "Phát đi thông báo khẩn cấp khuyến cáo người lao động tránh các hội nhóm môi giới thu phí hoa hồng để đặt chỗ mua căn hộ trái luật.",
+      "content": "Ban quản lý nhà ở vừa phát đi thông báo khẩn về việc phát hiện một số đối tượng, sàn giao dịch bất động sản mạo danh là chuyên viên Ban chính sách nhà ở để thu nhận phí dịch vụ, tiền cọc 'đảm bảo 100% bốc trúng' căn hộ NOXH tại khu vực Phường Khuê Mỹ.\n\nTái khẳng định:\n- Tất cả quy trình tiếp nhận, hướng dẫn khai phôi đơn và thẩm duyệt chấm điểm hồ sơ hoàn toàn **MIỄN PHÍ** 100%.\n- Không hề có bất kỳ ủy quyền môi giới trung gian cho bất kỳ đơn vị sàn thương mại tự do nào.\n- Mọi hình thức hứa hẹn giữ chỗ đóng tiền mặt đều là hành vi gian lận pháp luật, người dân khi phát hiện vui lòng trình báo ngay cho cơ quan công an phường xã gần nhất để kịp thời can thiệp xử lý hình sự.",
+      "date": "28/04/2026",
+      "category": "Announcement",
+      "categoryLabel": "Tin Cảnh Giác",
+      "image": "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800",
+      "author": "Văn phòng Thanh tra xây dựng thành phố"
+    }
+  ],
+  "stats": [
+    { "count": "15", "label": "Tổng dự án NOXH", "subDec": "Đang triển khai quy hoạch", "icon": "domain" },
+    { "count": "12.4k", "label": "Tổng số căn hộ", "subDec": "Sản phẩm bàn giao", "icon": "vpn_key" },
+    { "count": "8,540", "label": "Đơn hồ sơ thụ lý", "subDec": "Tiếp nhận trực tiếp", "icon": "drafts" },
+    { "count": "92%", "label": "Tỷ lệ giải quyết", "subDec": "Hoàn thiện duyệt thành công", "icon": "task_alt" }
+  ]
+}

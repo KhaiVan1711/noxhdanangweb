@@ -1,0 +1,6 @@
+{
+  "name": "Cổng Tra Cứu Nhà Ở Xã Hội Đà Nẵng",
+  "description": "Cổng thông tin chính thức tra cứu dự án, chính sách điều kiện, tiến độ học tập và nộp hồ sơ nhà ở xã hội trên địa bàn thành phố Đà Nẵng.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
