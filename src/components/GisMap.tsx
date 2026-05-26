@@ -32,12 +32,12 @@ import {
 interface GisMapProps {
   projects: Project[];
   selectedProject: Project | null;
-  onSelectProject: (project: Project) => void;
+  onSelectProject: (project: Project | null) => void;
   onViewDetails: (id: string) => void;
 }
 
 type TileMode = "light" | "dark" | "satellite";
-type TagFilter = "all" | "receiving" | "coming_soon" | "handed_over";
+type TagFilter = "all" | "receiving" | "coming_soon" | "completed";
 type SortMode = "default" | "price_asc" | "price_desc" | "name";
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
@@ -75,7 +75,7 @@ const TAG_META: Record<
     bg: "bg-blue-50 text-blue-700",
     icon: <Clock className="w-3 h-3" />,
   },
-  handed_over: {
+  completed: {
     label: "Đã bàn giao",
     color: "#d97706",
     bg: "bg-amber-50 text-amber-700",
@@ -163,7 +163,7 @@ function buildMarkerHtml(color: string, isSelected: boolean): string {
 }
 
 function buildPopupHtml(proj: Project, color: string): string {
-  const meta = TAG_META[proj.tag] ?? TAG_META.handed_over;
+  const meta = TAG_META[proj.tag] ?? TAG_META.completed;
   return `
     <div style="
       min-width:240px;
@@ -242,9 +242,37 @@ export function GisMap({
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
 
+  // States for Mobile Optimizations
+  const [activeMobileView, setActiveMobileView] = useState<"list" | "map">("map");
+  const [mobileLegendOpen, setMobileLegendOpen] = useState(false);
+  const [mobileTileMenuOpen, setMobileTileMenuOpen] = useState(false);
+
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const { mapRef, markerLayerRef, tileLayerRef, userMarkerRef } =
     useLeafletMap(mapContainerRef);
+
+  // Switch to map view on mobile if a project is selected from outside
+  useEffect(() => {
+    if (selectedProject && window.innerWidth < 1024) {
+      setActiveMobileView("map");
+    }
+  }, [selectedProject]);
+
+  // Adjust Leaflet map sizing dynamically on mobile view toggling
+  useEffect(() => {
+    if (activeMobileView === "map" && mapRef.current) {
+      setTimeout(() => {
+        mapRef.current?.invalidateSize();
+      }, 150);
+    }
+  }, [activeMobileView]);
+
+  const handleSelectProjectMobile = (proj: Project) => {
+    onSelectProject(proj);
+    if (window.innerWidth < 1024) {
+      setActiveMobileView("map");
+    }
+  };
 
   // ── FILTERED + SORTED PROJECTS ──────────────────────────────────────────────
 
@@ -305,7 +333,7 @@ export function GisMap({
       bounds.push([proj.lat, proj.lng]);
 
       const isSelected = selectedProject?.id === proj.id;
-      const meta = TAG_META[proj.tag] ?? TAG_META.handed_over;
+      const meta = TAG_META[proj.tag] ?? TAG_META.completed;
       const color = meta.color;
 
       const icon = L.divIcon({
@@ -385,7 +413,7 @@ export function GisMap({
   const stats = useMemo(() => {
     const receiving = projects.filter((p) => p.tag === "receiving").length;
     const coming = projects.filter((p) => p.tag === "coming_soon").length;
-    const handed = projects.filter((p) => p.tag === "handed_over").length;
+    const handed = projects.filter((p) => p.tag === "completed").length;
     return { receiving, coming, handed, total: projects.length };
   }, [projects]);
 
@@ -416,10 +444,12 @@ export function GisMap({
 
       <div
         style={{ fontFamily: "'Be Vietnam Pro', system-ui, sans-serif" }}
-        className="grid grid-cols-1 lg:grid-cols-12 h-[740px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+        className="grid grid-cols-1 lg:grid-cols-12 h-[580px] md:h-[740px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl relative"
       >
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
-        <div className="lg:col-span-4 flex flex-col border-r border-slate-100 bg-white overflow-hidden">
+        <div className={`lg:col-span-4 flex flex-col border-r border-slate-100 bg-white overflow-hidden ${
+          activeMobileView === "list" ? "flex h-full w-full" : "hidden lg:flex"
+        }`}>
 
           {/* HEADER */}
           <div className="px-5 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white">
@@ -515,7 +545,7 @@ export function GisMap({
                     { key: "all", label: "Tất cả" },
                     { key: "receiving", label: "Nhận hồ sơ" },
                     { key: "coming_soon", label: "Sắp mở" },
-                    { key: "handed_over", label: "Bàn giao" },
+                    { key: "completed", label: "Bàn giao" },
                   ] as { key: TagFilter; label: string }[]
                 ).map((f) => (
                   <button
@@ -529,7 +559,7 @@ export function GisMap({
                             ? "bg-emerald-600 text-white shadow-sm"
                             : f.key === "coming_soon"
                             ? "bg-blue-600 text-white shadow-sm"
-                            : f.key === "handed_over"
+                            : f.key === "completed"
                             ? "bg-amber-500 text-white shadow-sm"
                             : "bg-slate-900 text-white shadow-sm"
                           : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -612,12 +642,12 @@ export function GisMap({
             ) : (
               filteredProjects.map((proj) => {
                 const isSelected = selectedProject?.id === proj.id;
-                const meta = TAG_META[proj.tag] ?? TAG_META.handed_over;
+                const meta = TAG_META[proj.tag] ?? TAG_META.completed;
 
                 return (
                   <div
                     key={proj.id}
-                    onClick={() => onSelectProject(proj)}
+                    onClick={() => handleSelectProjectMobile(proj)}
                     className={`
                       px-5 py-3.5
                       border-b border-slate-100
@@ -716,35 +746,68 @@ export function GisMap({
         </div>
 
         {/* ── MAP PANEL ────────────────────────────────────────────────────── */}
-        <div className="lg:col-span-8 relative">
+        <div className={`lg:col-span-8 relative ${
+          activeMobileView === "map" ? "block h-full w-full" : "hidden lg:block h-full w-full"
+        }`}>
           <div ref={mapContainerRef} className="absolute inset-0 z-0" />
 
-          {/* TILE SWITCHER */}
-          <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-lg rounded-2xl p-2.5">
-            <div className="flex items-center gap-2 mb-2 px-1">
-              <Layers3 className="w-3.5 h-3.5 text-slate-500" />
-              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
-                Bản đồ
-              </span>
-            </div>
-            <div className="flex gap-1.5">
-              {(["light", "dark", "satellite"] as TileMode[]).map((m) => (
-                <button
-                  key={m}
-                  onClick={() => setTileMode(m)}
-                  className={`
-                    px-3 py-1.5 rounded-xl text-[11px] font-semibold capitalize transition-all
-                    ${
-                      tileMode === m
-                        ? "bg-slate-900 text-white shadow-sm"
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                    }
-                  `}
-                >
-                  {m === "light" ? "Sáng" : m === "dark" ? "Tối" : "Vệ tinh"}
-                </button>
-              ))}
-            </div>
+          {/* TILE SWITCHER (COLLAPSIBLE FOR MOBILE) */}
+          <div className={`
+            absolute top-4 left-4 z-[1000]
+            bg-white/95 backdrop-blur-xl border border-slate-200 shadow-lg rounded-2xl transition-all duration-300
+            ${mobileTileMenuOpen ? "p-3 block" : "p-0 w-11 h-11 flex items-center justify-center rounded-2xl shadow-md border-slate-200 hover:bg-slate-50 cursor-pointer lg:p-3 lg:w-auto lg:h-auto lg:rounded-2xl lg:shadow-lg"}
+          `}
+            onClick={() => {
+              if (window.innerWidth < 1024 && !mobileTileMenuOpen) setMobileTileMenuOpen(true);
+            }}
+          >
+            {(!mobileTileMenuOpen && window.innerWidth < 1024) ? (
+              <div className="flex items-center justify-center text-slate-700 w-11 h-11" title="Đổi bản đồ">
+                <Layers3 className="w-5 h-5" />
+              </div>
+            ) : (
+              <div>
+                <div className="flex items-center justify-between mb-2 px-1">
+                  <div className="flex items-center gap-2">
+                    <Layers3 className="w-3.5 h-3.5 text-slate-500" />
+                    <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                      Bản đồ
+                    </span>
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMobileTileMenuOpen(false);
+                    }}
+                    className="lg:hidden text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="flex gap-1.5">
+                  {(["light", "dark", "satellite"] as TileMode[]).map((m) => (
+                    <button
+                      key={m}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setTileMode(m);
+                        if (window.innerWidth < 1024) setMobileTileMenuOpen(false);
+                      }}
+                      className={`
+                        px-3 py-1.5 rounded-xl text-[11px] font-semibold capitalize transition-all
+                        ${
+                          tileMode === m
+                            ? "bg-slate-900 text-white shadow-sm"
+                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                        }
+                      `}
+                    >
+                      {m === "light" ? "Sáng" : m === "dark" ? "Tối" : "Vệ tinh"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* MAP CONTROLS */}
@@ -776,7 +839,7 @@ export function GisMap({
                 key={i}
                 onClick={btn.onClick}
                 className={`
-                  w-10 h-10 rounded-2xl shadow-md
+                  w-10 h-10 md:w-11 md:h-11 rounded-2xl shadow-md
                   flex items-center justify-center
                   transition-all active:scale-95
                   ${btn.className}
@@ -787,28 +850,55 @@ export function GisMap({
             ))}
           </div>
 
-          {/* LEGEND */}
-          <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-xl rounded-2xl p-4 min-w-[200px]">
-            <div className="text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-widest">
-              Trạng thái
-            </div>
-            <div className="space-y-2">
-              {Object.entries(TAG_META).map(([key, m]) => (
-                <div key={key} className="flex items-center gap-2.5">
-                  <div
-                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: m.color }}
-                  />
-                  <span className="text-[11px] font-medium text-slate-700">
-                    {m.label}
-                  </span>
+          {/* LEGEND (COLLAPSIBLE FOR MOBILE) */}
+          <div className={`
+            absolute bottom-4 left-4 z-[1000]
+            bg-white/95 backdrop-blur-xl border border-slate-200 shadow-xl rounded-2xl transition-all duration-300
+            ${mobileLegendOpen ? "p-4 min-w-[200px] block" : "p-0 w-11 h-11 flex items-center justify-center rounded-2xl shadow-md border-slate-200 hover:bg-slate-50 cursor-pointer lg:p-4 lg:min-w-[200px] lg:w-auto lg:h-auto lg:rounded-2xl lg:shadow-xl"}
+          `}
+            onClick={() => {
+              if (window.innerWidth < 1024 && !mobileLegendOpen) setMobileLegendOpen(true);
+            }}
+          >
+            {(!mobileLegendOpen && window.innerWidth < 1024) ? (
+              <div className="flex items-center justify-center text-slate-700 w-11 h-11" title="Chú thích">
+                <SlidersHorizontal className="w-5 h-5" />
+              </div>
+            ) : (
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Trạng thái
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setMobileLegendOpen(false);
+                    }}
+                    className="lg:hidden text-slate-400 hover:text-slate-600 p-0.5 rounded-full"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  {Object.entries(TAG_META).map(([key, m]) => (
+                    <div key={key} className="flex items-center gap-2.5">
+                      <div
+                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: m.color }}
+                      />
+                      <span className="text-[11px] font-medium text-slate-700">
+                        {m.label}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* BRANDING */}
-          <div className="absolute bottom-4 right-4 z-[1000] bg-white/90 backdrop-blur-xl border border-slate-200 shadow-md rounded-2xl px-4 py-2">
+          <div className="hidden md:block absolute bottom-4 right-4 z-[1000] bg-white/90 backdrop-blur-xl border border-slate-200 shadow-md rounded-2xl px-4 py-2">
             <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800">
               GIS NOXH ĐÀ NẴNG
             </div>
@@ -825,7 +915,81 @@ export function GisMap({
               </div>
             </div>
           )}
+
+          {/* SELECTED PROJECT MOBILE FLOATING CARD */}
+          {selectedProject && (
+            <div className="absolute bottom-4 left-4 right-4 z-[1001] bg-white border border-slate-200 shadow-2xl rounded-3xl p-4 flex flex-col gap-3 lg:hidden">
+              <div className="flex justify-between items-start">
+                <div className="flex gap-2.5 items-start">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center shrink-0 border border-blue-200">
+                    <Building2 className="w-5 h-5 text-blue-700" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold ${TAG_META[selectedProject.tag]?.bg || "bg-slate-100 text-slate-700"} mb-1`}>
+                      {TAG_META[selectedProject.tag]?.icon}
+                      {TAG_META[selectedProject.tag]?.label || selectedProject.status}
+                    </span>
+                    <h4 className="font-extrabold text-slate-900 text-sm leading-tight line-clamp-1">
+                      {selectedProject.name}
+                    </h4>
+                    <p className="text-[11px] text-slate-500 font-medium flex items-center gap-1 mt-0.5 leading-none">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      <span className="line-clamp-1">{selectedProject.location}</span>
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => onSelectProject(null)}
+                  className="p-1.5 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition-colors cursor-pointer shrink-0"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                <div>
+                  <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block">Giá bàn giao dự tính</span>
+                  <span className="text-sm font-black text-blue-700">{selectedProject.price}</span>
+                </div>
+
+                <button
+                  onClick={() => onViewDetails(selectedProject.id)}
+                  className="px-4 py-2 bg-gradient-to-r from-slate-900 to-slate-800 text-white rounded-xl text-xs font-bold shadow-lg shadow-slate-900/10 hover:opacity-95 transition-all text-center flex items-center gap-1.5"
+                >
+                  <Eye className="w-3.5 h-3.5" /> Chi tiết dự án
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* MOBILE VIEW TOGGLE COCKPIT PILL */}
+        {(!selectedProject || activeMobileView !== "map") && (
+          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1002] lg:hidden flex bg-slate-950/95 hover:bg-slate-900 border border-white/10 text-white rounded-full p-1 shadow-2xl backdrop-blur-md transition-all active:scale-[0.98]">
+            <button
+              onClick={() => setActiveMobileView("list")}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeMobileView === "list"
+                  ? "bg-white text-slate-950 shadow"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              Danh sách
+            </button>
+            <button
+              onClick={() => setActiveMobileView("map")}
+              className={`px-4 py-2 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 ${
+                activeMobileView === "map"
+                  ? "bg-white text-slate-950 shadow"
+                  : "text-slate-300 hover:text-white"
+              }`}
+            >
+              <Layers3 className="w-3.5 h-3.5" />
+              Bản đồ
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
