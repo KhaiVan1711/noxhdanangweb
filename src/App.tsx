@@ -290,14 +290,17 @@ export default function App() {
       <main className="flex-1 pt-24">
         
         {activeTab === "home" && (
-          <section 
-            className="relative min-h-[85vh] flex items-center justify-center pt-12 pb-24 px-4 sm:px-10 bg-cover bg-center"
-            style={{ 
-              backgroundImage: `url("https://lh3.googleusercontent.com/aida-public/AB6AXuBwaHQxPL8wE7n0P-S5o6noejMX_782tx-fBGFeDWqPKD28JLI3zMiMI0FaZ6WtMbJsKj4PmRR22LFkHcChBWAkuwhzsONN6NENAuJzlY04oYSx7YrgR56rSsL3Q_3K3u4lR-tG6rGBfEl7Dmn3xsz_46gda4xC79cNrt54sOehUPphSaziSheIc9FBXz7jbKVwfG7JaQ76vTZX2A9cJsv6K5BLvjIkWpldRL7d73q4fVGQn76R7ymGo9Mcpf_RFf0sZYyyOHl6tUF89w")` 
-            }}
-          >
+          <section className="relative min-h-[85vh] flex items-center justify-center pt-12 pb-24 px-4 sm:px-10 overflow-hidden">
+            {/* Background Image */}
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBwaHQxPL8wE7n0P-S5o6noejMX_782tx-fBGFeDWqPKD28JLI3zMiMI0FaZ6WtMbJsKj4PmRR22LFkHcChBWAkuwhzsONN6NENAuJzlY04oYSx7YrgR56rSsL3Q_3K3u4lR-tG6rGBfEl7Dmn3xsz_46gda4xC79cNrt54sOehUPphSaziSheIc9FBXz7jbKVwfG7JaQ76vTZX2A9cJsv6K5BLvjIkWpldRL7d73q4fVGQn76R7ymGo9Mcpf_RFf0sZYyyOHl6tUF89w"
+              alt="Cổng thông tin Nhà ở Xã hội Đà Nẵng"
+              className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+              referrerPolicy="no-referrer"
+            />
+
             {/* Glass blurring over and deep dim overlay */}
-            <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-white/20 to-[#f9f9fe]/50 backdrop-blur-[0.5px]"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/25 to-[#f9f9fe]/90 backdrop-blur-[0.5px]"></div>
 
             <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center mt-6">
               
