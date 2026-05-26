@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
 import { 
   Search, 
   Calendar, 
@@ -112,10 +114,28 @@ export function NewsSection() {
   };
 
   useEffect(() => {
-    loadNewsData();
+    const unsubscribe = onSnapshot(
+      collection(db, "news"),
+      (snapshot) => {
+        const liveArticles = snapshot.docs.map((doc) => doc.data() as Article);
+        liveArticles.sort((a, b) => (b.id || "").localeCompare(a.id || ""));
+        if (liveArticles.length > 0) {
+          setArticles(liveArticles);
+        } else {
+          loadNewsData();
+        }
+      },
+      (error) => {
+        console.error("News real-time subscription error:", error);
+        loadNewsData(); // Fallback
+      }
+    );
 
     window.addEventListener("refresh-noxh-data", loadNewsData);
-    return () => window.removeEventListener("refresh-noxh-data", loadNewsData);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("refresh-noxh-data", loadNewsData);
+    };
   }, []);
 
   // Filters & Search

@@ -6,6 +6,21 @@ import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import dotenv from "dotenv";
 
+// Import Firebase SDK elements for server-side persistence
+import { initializeApp } from "firebase/app";
+import { 
+  getFirestore, 
+  collection, 
+  getDocs, 
+  getDoc, 
+  setDoc, 
+  doc, 
+  deleteDoc,
+  query,
+  where
+} from "firebase/firestore";
+import firebaseConfig from "./firebase-applet-config.json";
+
 dotenv.config();
 
 const app = express();
@@ -13,22 +28,299 @@ app.use(express.json());
 
 const PORT = 3000;
 
-// Lazy initialization of GoogleGenAI
+// Initialize Firebase App & Firestore Database on startup
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+
+// Seeding standard assets if Firestore is initially unpopulated
+const DB_FILE = path.join(process.cwd(), "db_noxh.json");
+
+// Hardcoded defaults to ensure user database starts fully loaded with clean data
+const DEFAULT_PROJECTS = [
+  {
+    id: "hoa-khanh",
+    name: "NOXH Khu công nghiệp Hòa Khánh",
+    location: "Đường số 4, KCN Hòa Khánh, Liên Chiểu, Đà Nẵng",
+    investor: "Công ty Cổ phần Địa ốc Xanh Sài Gòn Thuận Phước",
+    status: "Đang nhận hồ sơ",
+    price: "~9.4tr/m²",
+    priceRaw: 9400000,
+    progress: 80,
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuClHteteBIbuLZyM10AFJQ6Vm9yEguYn8Qs7clGFwM6zDxRP-74dGICejZqhjdCbHvRFksQ7ZphNCcoxaXJ9P5qUF5VroQL07ZCZtV7HuqWONejByAwAjX9AvX4xaa9HvIVYG20hOYS1i2jovOGFTeL0tBLDsijo14Nms_e0DzJQ-QhXLPy7k1ShHaz-chG18MXjpzfhxNAlA31LSzYF7OeSDG7T_31W67WWmMacR1OCZSSoGYCdEqnk1eXboXQjfmf82lLGsueeA",
+    tag: "receiving",
+    coordinates: { x: 35, y: 42 },
+    lat: 16.07185,
+    lng: 108.14777,
+    districts: "Liên Chiểu",
+    scale: "8 block chung cư cao từ 12-15 tầng với gần 2,000 căn hộ",
+    types: "Căn hộ 1-2 phòng ngủ, diện tích từ 32m² đến 66m²",
+    deadline: "Dự kiến bàn giao tháp tiếp theo vào Quý IV/2026",
+    hotline: "(0236) 3789 123",
+    requirements: [
+      "Chưa sở hữu đất đai hoặc nhà ở tại Đà Nẵng",
+      "Thu nhập không đóng thuế thu nhập cá nhân thường xuyên",
+      "Có đăng ký thường trú hoặc tạm trú trên 1 năm kèm tham gia BHXH tại Đà Nẵng"
+    ]
+  },
+  {
+    id: "bau-tram",
+    name: "The Ori Garden (Bàu Tràm)",
+    location: "Khu đô thị xanh Bàu Tràm Lakeside, Liên Chiểu, Đà Nẵng",
+    investor: "Công ty Cổ phần Đầu tư Sài Gòn - Đà Nẵng (SDI)",
+    status: "Sắp mở bán",
+    price: "~12.5tr/m²",
+    priceRaw: 12500000,
+    progress: 40,
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD7YJE3WIsO4fvd_AO7OmBTPkI-ZDWdiubJExkNJLnMq8VtNgUSoYxibQ5zVCTwfUs04KXiqd2_cbzbTdFeGFk4gLn2_AEc38-uBavo7ou3TT-qySuBE-1NU4kYvxRIYOxfPWAWjZYOl3P5AE-0H6mkQw9ardc8CyQF8OxjGV2tKx8OLe59A4-jri_C2yJPvLBRb7d7-mNOHdFilb8vvxmHE3usclVcwD9RmH4pqHbx1QEekC4cnd0bDh5ydfv9uaiy9H6rfPV_th8",
+    tag: "coming_soon",
+    coordinates: { x: 30, y: 48 },
+    lat: 16.08889,
+    lng: 108.14300,
+    districts: "Liên Chiểu",
+    scale: "Hơn 3,000 căn hộ chất lượng cao phong cách Nhật Bản với hệ sinh thái khép kín",
+    types: "Căn hộ từ 35.3m² đến 70m² (Studio, 1 PN + 1, 2 PN, 3 PN)",
+    deadline: "Dự kiến mở bán giai đoạn 2 vào tháng 8/2026",
+    hotline: "(0236) 3999 888",
+    requirements: [
+      "Chưa từng đứng tên sở hữu đất nền hay nhà ở tại địa bàn TP. Đà Nẵng",
+      "Là công nhân, viên chức, cán bộ hoặc người lao động tự do có thu nhập thấp dưới quy định",
+      "Thủ tục đăng ký xét duyệt và tính điểm ưu tiên thông qua Sở Xây dựng Đà Nẵng"
+    ]
+  },
+  {
+    id: "nai-hien-dong",
+    name: "Chung cư thu nhập thấp Nại Hiên Đông",
+    location: "Phường Nại Hiên Đông, Sơn Trà, Đà Nẵng",
+    investor: "Công ty Cổ phần Đầu tư và Phát triển Nhà Đà Nẵng",
+    status: "Đã bàn giao",
+    price: "Đã hết quỹ",
+    priceRaw: 8500000,
+    progress: 100,
+    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuASYE2FhNKpl8F_zuy1X8hjyLCbWY66kSKmP4q5ONDxLl9Y-NBt3D7omVwbuoxIhw7JxLEfR5oy9B7bm6c2JwS5FhWZr4DdQ334SJDw6Nd6wb_n0vv8owtIAdxmdQ4xtGO85QLmczzYV2k6IG6MXtHVEy_x3HQXI81W3mjQt52ym6uuWx2jMA2Ynz_aDLTxX73IVMTWPGZrFAw3GTTf5kyy2-OeDESxVFC1oBEPk779WUB38z6niHZOOCM9b-fvzjz6B8aIys3Vo5k",
+    tag: "completed",
+    coordinates: { x: 65, y: 32 },
+    lat: 16.09631,
+    lng: 108.23277,
+    districts: "Sơn Trà",
+    scale: "5 block chung cư cao từ 7-12 tầng phục vụ người có thu nhập thấp quận Sơn Trà",
+    types: "Diện tích căn hộ trung bình từ 45m² đến 60m² rộng rãi",
+    deadline: "Đã hoàn thành bàn giao và đi vào vận hành ổn định lâu dài",
+    hotline: "(0236) 3111 222",
+    requirements: [
+      "Chính sách ưu tiên cho hộ nghèo giải tỏa tái định cư tại Sơn Trà",
+      "Người dân thuộc diện chính sách được phê duyệt đặc biệt của thành phố",
+      "Hiện được vận hành ổn định bởi Ban quản lý Nhà chung cư Đà Nẵng"
+    ]
+  },
+  {
+    id: "an-phu-dong",
+    name: "NOXH An Phú Đông Cẩm Lệ",
+    location: "Phường Hòa Thọ Đông, Cẩm Lệ, Đà Nẵng",
+    investor: "Sở Xây dựng Đà Nẵng phối hợp Liên minh HTX",
+    status: "Sắp mở bán",
+    price: "~11.8tr/m²",
+    priceRaw: 11800000,
+    progress: 15,
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+    tag: "coming_soon",
+    coordinates: { x: 45, y: 70 },
+    lat: 16.01429,
+    lng: 108.19634,
+    districts: "Cẩm Lệ",
+    scale: "Dự án gồm 2 tòa tháp hiện đại cao 15 tầng với khuôn viên xanh mát, bãi đỗ xe rộng rãi",
+    types: "Diện tích từ 40m² đến 65m² (1-2 phòng ngủ, tối ưu ánh sáng tự nhiên)",
+    deadline: "Dự kiến bàn giao vào Quý I/2028, nhận hồ sơ thẩm định trước tháng 12/2026",
+    hotline: "(0236) 3888 777",
+    requirements: [
+      "Ưu tiên công chức, viên chức trẻ làm việc tại Trung tâm Hành chính quận Cẩm Lệ",
+      "Hộ gia đình có hoàn cảnh khó khăn chưa sở hữu đất và tài sản gắn liền với đất tại TP. Đà Nẵng",
+      "Nộp đơn đăng ký kèm giấy xác nhận nhà ở thông qua tổ dân phố và phường"
+    ]
+  },
+  {
+    id: "nam-cau-tuyen-son",
+    name: "Chung cư Xã hội Nam Cầu Tuyên Sơn",
+    location: "Khu đô thị Nam Cầu Tuyên Sơn, Ngũ Hành Sơn, Đà Nẵng",
+    investor: "Tập đoàn Đầu tư Đất Xanh Miền Trung và thành phố",
+    status: "Đang nhận hồ sơ",
+    price: "~14.2tr/m²",
+    priceRaw: 14200000,
+    progress: 90,
+    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+    tag: "receiving",
+    coordinates: { x: 72, y: 55 },
+    lat: 16.02708,
+    lng: 108.23594,
+    districts: "Ngũ Hành Sơn",
+    scale: "Thiết kế thông minh lồng ghép khu thương mại nhỏ, công viên và nhà cộng đồng",
+    types: "Căn hộ 2 phòng ngủ diện tích đa dạng từ 48m² - 68m²",
+    deadline: "Bàn giao căn hộ đầu tiên vào tháng 10/2026, đợt nhận hồ sơ cuối kết thúc ngày 30/08/2026",
+    hotline: "(0236) 3555 444",
+    requirements: [
+      "Người lao động cư trú tại quận Ngũ Hành Sơn hoặc giáp ranh Cẩm Lệ, Sơn Trà",
+      "Có đóng bảo hiểm xã hội tại TP. Đà Nẵng tối thiểu 12 tháng liên tục",
+      "Bảo đảm điều kiện thu nhập không thuộc đối tượng nộp thuế TNCN đóng tại địa phương"
+    ]
+  },
+  {
+    id: "lien-chieu-eco",
+    name: "Nhà ở xã hội Eco Home Liên Chiểu",
+    location: "Phường Hòa Khánh Bắc, Liên Chiểu, Đà Nẵng",
+    investor: "Tập đoàn đầu tư Địa ốc Eco Việt Nam",
+    status: "Sắp mở bán",
+    price: "~10.5tr/m²",
+    priceRaw: 10500000,
+    progress: 25,
+    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800",
+    tag: "coming_soon",
+    coordinates: { x: 25, y: 35 },
+    lat: 16.07542,
+    lng: 108.13689,
+    districts: "Liên Chiểu",
+    scale: "Khu chung cư phức hợp gồm 3 block căn hộ tiện nghi với hồ bơi và khu vui chơi ngoài trời cho bé",
+    types: "Diện tích linh hoạt từ 45m² đến 62m² tinh tế, chuẩn xanh",
+    deadline: "Dự kiến bàn giao tháp A vào Quý II/2027",
+    hotline: "(0236) 3666 999",
+    requirements: [
+      "Người dân có hộ khẩu tại Liên Chiểu chưa sở hữu nhà",
+      "Có thu nhập thực tế trung bình dưới 11 triệu đồng/tháng của cá nhân đăng ký",
+      "Xem xét các điểm ưu tiên như đóng góp xã hội, gia đình chính sách hoặc hoàn cảnh đặc biệt"
+    ]
+  }
+];
+
+const DEFAULT_NEWS = [
+  {
+    id: "news-1",
+    title: "Đà Nẵng công bố đề án phát triển 10.000 căn hộ nhà ở xã hội đến năm 2030",
+    excerpt: "UBND thành phố vừa thông qua lộ trình phân bổ quỹ đất xây dựng định hướng chuỗi dự án trọng vùng tại quận Liên Chiểu, Cẩm Lệ, Ngũ Hành Sơn nhằm đảm bảo nơi an cư cho người lao động, gia đình cận nghèo địa phương.",
+    content: "Chiều ngày 20/5/2026, UBND TP. Đà Nẵng đã chính thức ký duyệt Đề án quy hoạch tổng thể nhà ở xã hội (NOXH) giai đoạn 2026 - 2530. \n\nMục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 10.000 căn hộ chất lượng cao với các chính sách trợ giá hấp dẫn. Trong đó, tập trung khai thác đồng bộ các khu đô thị vệ tinh xung quanh khu công nghiệp Hòa Khánh, khu công nghệ cao Đà Nẵng và dọc theo các trục giao thông chính của thành phố.\n\nSở Xây dựng Đà Nẵng sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.",
+    date: "20/05/2026",
+    category: "Announcement",
+    categoryLabel: "Thông Báo Sửa",
+    image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+    author: "Văn phòng Sở Xây dựng Đà Nẵng"
+  },
+  {
+    id: "news-2",
+    title: "Hướng dẫn xác nhận điều kiện nhà ở bình quan đạt chuẩn dưới 15m² sàn/người",
+    excerpt: "Cẩm nang chi tiết hướng dẫn công dân nộp đơn trực tiếp tại cơ quan UBND Phường/Xã để lấy đóng dấu mộc xác nhận diện tích nhà ở bình quan theo Nghị định số 54/2026/NĐ-CP mới ban hành.",
+    content: "Theo Nghị định số 54/2026/NĐ-CP của Chính phủ chính thức áp dụng sửa đổi Luật Nhà ở, điều kiện về thực trạng nhà ở của hộ gia đình chính thức nâng hạn mức diện tích bình quan đầu người lên tối đa 15 m² sàn/người (thay vì 10 m² sàn như quy định cũ).\n\nĐây là tin vui lớn, mở rộng cửa cho hàng nghìn hộ gia đình khó khăn có đông con em sinh sống chen chúc tại khu vực đô thị Đà Nẵng có cơ hội tiếp cận NOXH.\n\n**Quy trình hồ sơ xin xác nhận:**\n1. Người đứng đơn tải xuống Mẫu Đơn xác nhận diện tích nhà ở bình quan (Mẫu 03 Phụ lục Nghị định).\n2. Kê khai đúng danh sách thành viên cùng đăng ký thường trú tại căn nhà hiện tại.\n3. Nộp hồ sơ tại UBND cấp Xã/Phường nơi đăng ký thường trú. UBND cấp xã có nhiệm vụ xác minh thực tế, phản hồi giải quyết đóng dấu đỏ phê duyệt trong thời hạn tối đa 07 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ.",
+    date: "14/05/2026",
+    category: "Policy",
+    categoryLabel: "Phân Tích Chính Sách",
+    image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
+    author: "Phòng Quản lý nhà và thị trường Bất Động Sản"
+  },
+  {
+    id: "news-3",
+    title: "Danh sách bốc thăm đợt 1 dự án chung cư NOXH tại Liên Chiểu",
+    excerpt: "Công khai kết quả thẩm định điểm và công bố số lượng căn hộ bốc thăm cụ thể thuộc Dự án Căn hộ Sun Garden Liên Chiểu. Tổng cộng có 350 căn hoàn tất bàn bàn giao kỹ thuật.",
+    content: "Sở Xây dựng thành phố Đà Nẵng đã phối hợp cùng Công ty Liên doanh Phát triển Đô thị Sun Garden tổ chức nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.\n\nDự án Sun Garden Liên Chiểu ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó Sở đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).\n\nBuổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám sát trực tiếp của cơ quan thanh tra thành phố vào sáng ngày 01/06/2026 tại Nhà văn hóa quận Liên Chiểu và truyền hình trực tuyến qua cổng dữ liệu thông tin đại chúng.",
+    date: "05/05/2026",
+    category: "Construction",
+    categoryLabel: "Tiến Độ Dự Án",
+    image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
+    author: "Hội đồng Thẩm định dự án Đà Nẵng"
+  },
+  {
+    id: "news-4",
+    title: "Cảnh báo mạo danh chuyên viên ban ngành Sở để nhận tiền 'cọc giữ chỗ' nhà ở xã hội",
+    excerpt: "Sở Xây dựng Đà Nẵng đưa ra thông báo khẩn cấp khuyến cáo người lao động tránh các hội nhóm môi giới thu phí hoa hồng để đặt chỗ mua căn hộ trái luật.",
+    content: "Sở Xây dựng thành phố Đà Nẵng vừa phát đi thông báo khẩn số 112/TB-SXD về việc phát hiện một số đối tượng, sàn giao dịch bất động sản mạo danh là chuyên viên Ban chính sách nhà ở để thu nhận phí dịch vụ, tiền cọc 'đảm bảo 100% bốc trúng' căn hộ NOXH tại khu vực quận Ngũ Hành Sơn.\n\nSở Xây dựng tái khẳng định:\n- Tất cả quy trình tiếp nhận, hướng dẫn khai phôi đơn và thẩm duyệt chấm điểm hồ sơ hoàn toàn **MIỄN PHÍ** 100%.\n- Không hề có bất kỳ ủy quyền môi giới trung gian cho bất kỳ đơn vị sàn thương mại tự do nào.\n- Mọi hình thức hứa hẹn giữ chỗ đóng tiền mặt đều là hành vi gian lận pháp luật, người dân khi phát hiện vui lòng trình báo ngay cho cơ quan công an quận gần nhất để kịp thời can thiệp xử lý hình sự.",
+    date: "28/04/2026",
+    category: "Announcement",
+    categoryLabel: "Tin Cảnh Giác",
+    image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800",
+    author: "Văn phòng Thanh tra xây dựng thành phố"
+  }
+];
+
+const DEFAULT_STATS = [
+  { count: "15", label: "Tổng dự án NOXH", subDec: "Đang triển khai quy hoạch", icon: "domain" },
+  { count: "12.4k", label: "Tổng số căn hộ", subDec: "Sản phẩm bàn giao", icon: "vpn_key" },
+  { count: "8,540", label: "Đơn hồ sơ thụ lý", subDec: "Tiếp nhận trực tiếp ở Sở", icon: "drafts" },
+  { count: "92%", label: "Tỷ lệ giải quyết", subDec: "Hoàn thiện duyệt thành công", icon: "task_alt" }
+];
+
+async function seedFirestore() {
+  try {
+    const projectsSnap = await getDocs(collection(db, "projects"));
+    if (projectsSnap.empty) {
+      console.log("[Firebase Seeding] Empty remote database detected. Automatically seeding all Vietnamese datasets...");
+      
+      // Attempt load from existing local JSON file if it is already populated, falling back to core array
+      let initializedData: any = { projects: DEFAULT_PROJECTS, news: DEFAULT_NEWS, stats: DEFAULT_STATS };
+      if (fs.existsSync(DB_FILE)) {
+        try {
+          const contents = JSON.parse(fs.readFileSync(DB_FILE, "utf-8"));
+          if (contents.projects && contents.projects.length > 0) initializedData.projects = contents.projects;
+          if (contents.news && contents.news.length > 0) initializedData.news = contents.news;
+          if (contents.stats && contents.stats.length > 0) initializedData.stats = contents.stats;
+          if (contents.geminiApiKey) initializedData.geminiApiKey = contents.geminiApiKey;
+          if (contents.n8nWebhookToken) initializedData.n8nWebhookToken = contents.n8nWebhookToken;
+        } catch (e) {
+          console.error("[Firebase Seeding] Local db parse failed, using hardcoded templates", e);
+        }
+      }
+
+      // Write projects to Cloud Firestore
+      for (const item of initializedData.projects) {
+        await setDoc(doc(db, "projects", item.id), item);
+      }
+      console.log(`[Firebase Seeding] Successfully seeded ${initializedData.projects.length} projects to cloud.`);
+
+      // Write news to Cloud Firestore
+      for (const item of initializedData.news) {
+        await setDoc(doc(db, "news", item.id), item);
+      }
+      console.log(`[Firebase Seeding] Successfully seeded ${initializedData.news.length} news items to cloud.`);
+
+      // Write Stats to Cloud Firestore
+      let idx = 0;
+      for (const item of initializedData.stats) {
+        const docId = `stat-${idx}`;
+        await setDoc(doc(db, "stats", docId), { id: docId, ...item });
+        idx++;
+      }
+      console.log(`[Firebase Seeding] Successfully seeded stats items.`);
+
+      // Write Config global credentials to Cloud Firestore
+      const configDoc = {
+        id: "global",
+        geminiApiKey: initializedData.geminiApiKey || process.env.GEMINI_API_KEY || "",
+        n8nWebhookToken: initializedData.n8nWebhookToken || "noxh_danang_secret_n8n_token_" + Math.random().toString(36).substring(2, 8)
+      };
+      await setDoc(doc(db, "configs", "global"), configDoc);
+      console.log("[Firebase Seeding] Successfully seeded configs global node.");
+    } else {
+      console.log("[Firebase] Remote firestore has existing collections. Seeding bypassed.");
+    }
+  } catch (err) {
+    console.error("[Firebase Seeding Exception]:", err);
+  }
+}
+
+// Trigger Seeding on system boot
+seedFirestore();
+
+
+// ─── CHAT BOT COMPONENT UTILS ───────────────────────────────────────────────
 let aiClient: GoogleGenAI | null = null;
 let lastUsedApiKey: string | undefined = undefined;
 
-function getAIClient() {
+async function getLiveAIClient() {
   dotenv.config({ override: true });
   let apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
     try {
-      const db = readDb();
-      if (db && db.geminiApiKey) {
-        apiKey = db.geminiApiKey;
+      const configSnap = await getDoc(doc(db, "configs", "global"));
+      if (configSnap.exists()) {
+        apiKey = configSnap.data().geminiApiKey;
       }
     } catch (e) {
-      // ignore read errors on initialization
+      console.error("[API Key Fetch Failed]", e);
     }
   }
 
@@ -40,7 +332,7 @@ function getAIClient() {
     const masked = apiKey.length > 10 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
     console.log(`[AI Client Info] Using API Key: ${masked}`);
   } else {
-    console.warn("[AI Client Info] No GEMINI_API_KEY found in process.env or db_noxh.json");
+    console.warn("[AI Client Info] No GEMINI_API_KEY found in process.env or configs/global.");
   }
 
   if (!aiClient || lastUsedApiKey !== apiKey) {
@@ -54,10 +346,13 @@ function getAIClient() {
       }
     });
   }
-  return aiClient;
+  return { ai: aiClient, key: apiKey };
 }
 
-// API routes first
+
+// ─── API ENDPOINTS ───────────────────────────────────────────────────────────
+
+// 1. Live AI Chatbot Endpoint
 app.post("/api/chat", async (req, res) => {
   try {
     const { message, history } = req.body;
@@ -69,12 +364,12 @@ app.post("/api/chat", async (req, res) => {
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
 
-    // Reload dotenv dynamically
     dotenv.config({ override: true });
     
-    // Fetch live database up-to-date projects, news and stats
-    const db = readDb();
-    const projectsList = (db.projects || []).map((p: any) => {
+    // Fetch live datasets from Cloud Firestore
+    const projectsSnap = await getDocs(collection(db, "projects"));
+    const projectsListStr = projectsSnap.docs.map(doc => {
+      const p = doc.data();
       const pReqs = Array.isArray(p.requirements) 
         ? p.requirements.map((r: string) => `    * ${r}`).join("\n") 
         : "    * Đáp ứng điều kiện chung của Sở Xây dựng Đà Nẵng";
@@ -92,13 +387,19 @@ app.post("/api/chat", async (req, res) => {
 ${pReqs}`;
     }).join("\n\n");
 
-    const newsList = (db.news || []).slice(0, 5).map((n: any) => {
+    const newsSnap = await getDocs(collection(db, "news"));
+    const newsListStr = newsSnap.docs.slice(0, 5).map(doc => {
+      const n = doc.data();
       return `- **Bài viết/Quyết định mới: ${n.title}** (${n.date || "Gần đây"})
     * Tóm tắt bài đăng: ${n.excerpt || ""}
     * Nội dung văn bản chính thức: ${n.content || ""}`;
     }).join("\n\n");
 
-    const statsList = (db.stats || []).map((s: any) => `  * ${s.label}: ${s.count} (${s.subDec})`).join("\n");
+    const statsSnap = await getDocs(collection(db, "stats"));
+    const statsListStr = statsSnap.docs.map(doc => {
+      const s = doc.data();
+      return `  * ${s.label}: ${s.count} (${s.subDec})`;
+    }).join("\n");
 
     const systemInstruction = `
 Bạn là NOXH Bot, một Trợ lý ảo cực kỳ am hiểu và tận tụy của Cổng Tra cứu Nhà ở Xã hội (NOXH) Thành phố Đà Nẵng, do Sở Xây dựng thành phố vận hành trực tiếp.
@@ -113,13 +414,13 @@ Nhiệm vụ của bạn là giải đáp chính xác, trung thực, rõ ràng v
   - Điều kiện thực trạng nhà ở: Gia đình chưa từng đứng tên quyền sử dụng đất hoặc sở hữu nhà riêng tại Đà Nẵng; diện tích sàn ở bình quân của cả hộ hiện tại dưới 10m²/người (hoặc chuẩn mới dưới 15m²/người tùy hộ giải tỏa tái định cư).
 
 2. Danh sách tất cả các Dự án NOXH chính thức của Đà Nẵng trực thuộc hệ thống Sở:
-${projectsList}
+${projectsListStr}
 
 3. Các thông báo, văn bản pháp luật, chính sách và tin cảnh báo mới nhất từ Sở Xây dựng:
-${newsList}
+${newsListStr}
 
 4. Thống kê thông tin vận hành từ Sở Xây dựng:
-${statsList}
+${statsListStr}
 
 --- QUY TẮC PHÁT NGÔN & ỨNG XỬ THỰC TẾ ---
 - Luôn xưng danh là "NOXH Bot", xưng hô lễ phép "Dạ chào anh/chị", "Kính chào Dân cư" hoặc "Dạ, em chào anh/chị ạ".
@@ -129,20 +430,20 @@ ${statsList}
 - Phát đi cảnh báo khẩn cấp cho người dân: Tuyệt đối tránh xa các hội nhóm facebook, zalo, môi giới tự dưng đòi thu "phí hoa hồng bôi trơn", "đóng cọc giữ căn hộ đẹp" trái luật pháp vì Sở Xây dựng Đà Nẵng xử lý bốc thăm công khai hoàn toàn MIỄN PHÍ.
 `;
 
-    const ai = getAIClient();
-    let apiKey = process.env.GEMINI_API_KEY || db.geminiApiKey;
-    if (apiKey) {
-      apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
-    }
+    const { ai, key } = await getLiveAIClient();
 
-    if (!apiKey || apiKey === "AIzaSy..." || apiKey === "") {
-      // Demo mode streaming simulation using LIVE DB projects for accurate answers even without key!
-      const liveProjNames = (db.projects || []).map((p: any) => `- **${p.name}** (${p.districts || "Phường xã"}): Trạng thái ${p.status || "Chưa rành"}, đơn giá ${p.price || "Chưa rõ"}, tiến độ ${p.progress || 0}%`).join("\n");
+    if (!key || key === "AIzaSy..." || key === "") {
+      // Demo streaming simulation using live databases if Gemini Key is unavailable
+      const fallbackList = projectsSnap.docs.map(doc => {
+        const p = doc.data();
+        return `- **${p.name}** (${p.districts || "Phường xã"}): Trạng thái ${p.status || "Chưa rõ"}, đơn giá ${p.price || "Chưa rõ"}, tiến độ ${p.progress || 0}%`;
+      }).join("\n");
+
       const demoResponse = `Dạ chào anh/chị! Hiện tại chatbot của Sở đang chạy ở chế độ mô phỏng trực tuyến (không nhận được GEMINI_API_KEY hợp lệ hoặc chưa lưu). 
 
 Tuy nhiên, chatbot vẫn đồng bộ thông tin dự án hiện thực từ hệ thống cơ sở dữ liệu Đà Nẵng cho anh/chị tham khảo ngay lúc này:
 
-${liveProjNames}
+${fallbackList}
 
 - **Hồ sơ xin mua**: Anh/chị lưu ý phải chưa sở hữu nhà đất tại TP. Đà Nẵng, có đăng ký thường trú hoặc tạm trú trên 1 năm kèm tham gia đóng Bảo hiểm Xã hội (BHXH) đầy đủ tại Đà Nẵng và thuộc diện thu nhập không chịu thuế TNCN thường xuyên.
 - **Thủ tục**: Phải chuẩn bị Đơn 01 (Đơn xin mua) và Đơn 03 (Đơn xác nhận thực trạng nhà đất của địa phương/công ty).
@@ -152,7 +453,7 @@ ${liveProjNames}
       const words = demoResponse.split(" ");
       for (const word of words) {
         res.write(`data: ${JSON.stringify({ text: word + " " })}\n\n`);
-        await new Promise((resolve) => setTimeout(resolve, 30));
+        await new Promise((resolve) => setTimeout(resolve, 20));
       }
       res.write('data: [DONE]\n\n');
       return res.end();
@@ -278,91 +579,73 @@ app.get("/api/hero-image", async (req, res) => {
   }
 });
 
-// Database storage configurations
-const DB_FILE = path.join(process.cwd(), "db_noxh.json");
 
-function readDb() {
+// ─── FIRESTORE POWERED PROJECTS API ROUTES ───────────────────────────────────
+
+app.get("/api/projects", async (req, res) => {
   try {
-    if (fs.existsSync(DB_FILE)) {
-      const content = fs.readFileSync(DB_FILE, "utf-8");
-      return JSON.parse(content);
-    }
-  } catch (err) {
-    console.error("Lỗi đọc db_noxh.json, bắt đầu khởi tạo mặc định:", err);
+    const snap = await getDocs(collection(db, "projects"));
+    const list = snap.docs.map(doc => doc.data());
+    res.json(list);
+  } catch (err: any) {
+    console.error("GET /api/projects error:", err);
+    res.status(500).json({ error: err.message });
   }
-  return { projects: [], news: [], stats: [] };
-}
-
-function writeDb(data: any) {
-  try {
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
-    return true;
-  } catch (err) {
-    console.error("Lỗi ghi db_noxh.json:", err);
-    return false;
-  }
-}
-
-// 1. Projects API Routes
-app.get("/api/projects", (req, res) => {
-  const db = readDb();
-  res.json(db.projects || []);
 });
 
-app.post("/api/projects", (req, res) => {
+app.post("/api/projects", async (req, res) => {
   try {
-    const db = readDb();
-    if (!db.projects) db.projects = [];
     const item = req.body;
-    
     if (!item.name) {
       return res.status(400).json({ error: "Tên dự án là bắt buộc" });
     }
 
-    if (item.id) {
-      // Edit existing
-      const index = db.projects.findIndex((p: any) => p.id === item.id);
-      if (index !== -1) {
-        db.projects[index] = { ...db.projects[index], ...item };
-      } else {
-        db.projects.push(item);
-      }
-    } else {
-      // New item
+    if (!item.id) {
       item.id = "proj-" + Date.now();
-      db.projects.push(item);
     }
 
-    writeDb(db);
+    await setDoc(doc(db, "projects", item.id), item);
     res.json({ success: true, project: item });
   } catch (err: any) {
+    console.error("POST /api/projects error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.delete("/api/projects/:id", (req, res) => {
+app.delete("/api/projects/:id", async (req, res) => {
   try {
-    const db = readDb();
-    if (!db.projects) db.projects = [];
     const id = req.params.id;
-    db.projects = db.projects.filter((p: any) => p.id !== id);
-    writeDb(db);
+    await deleteDoc(doc(db, "projects", id));
     res.json({ success: true });
   } catch (err: any) {
+    console.error("DELETE /api/projects/:id error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 2. News API Routes
-app.get("/api/news", (req, res) => {
-  const db = readDb();
-  res.json(db.news || []);
+
+// ─── FIRESTORE POWERED NEWS API ROUTES ───────────────────────────────────────
+
+app.get("/api/news", async (req, res) => {
+  try {
+    const snap = await getDocs(collection(db, "news"));
+    const list = snap.docs.map(doc => doc.data());
+    
+    // Sort news decending
+    list.sort((a: any, b: any) => {
+      const idA = a.id || "";
+      const idB = b.id || "";
+      return idB.localeCompare(idA);
+    });
+    res.json(list);
+  } catch (err: any) {
+    console.error("GET /api/news error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-app.post("/api/news", (req, res) => {
+app.post("/api/news", async (req, res) => {
   try {
-    const db = readDb();
-    if (!db.news) db.news = [];
     const item = req.body;
 
     // Optional Check for External/Webhook clients (e.g. n8n push automation)
@@ -370,10 +653,14 @@ app.post("/api/news", (req, res) => {
                         (req.headers["authorization"] ? req.headers["authorization"].toString().replace(/^Bearer\s+/i, "") : null) || 
                         req.query.token;
 
-    // If an n8n webhook token is configured in the database, and the client specifies a token, or has no Referer (meaning external webhook)
+    // Retrieve global webhook token from Firestore config
+    const globalSnap = await getDoc(doc(db, "configs", "global"));
+    const configData = globalSnap.exists() ? globalSnap.data() : { n8nWebhookToken: "" };
+    const dbWebhookToken = configData.n8nWebhookToken;
+
     const isWebhook = !req.headers["referer"] || clientToken;
-    if (db.n8nWebhookToken && isWebhook) {
-      if (clientToken !== db.n8nWebhookToken) {
+    if (dbWebhookToken && isWebhook) {
+      if (clientToken !== dbWebhookToken) {
         return res.status(401).json({ 
           error: "Xác thực Webhook thất bại! Webhook Token không khớp hoặc chưa được cung cấp qua header 'X-Webhook-Token'." 
         });
@@ -384,105 +671,133 @@ app.post("/api/news", (req, res) => {
       return res.status(400).json({ error: "Tiêu đề là bắt buộc" });
     }
 
-    if (item.id) {
-      const index = db.news.findIndex((n: any) => n.id === item.id);
-      if (index !== -1) {
-        db.news[index] = { ...db.news[index], ...item };
-      } else {
-        db.news.push(item);
-      }
-    } else {
+    if (!item.id) {
       item.id = "news-" + Date.now();
-      db.news.push(item);
     }
 
-    writeDb(db);
+    await setDoc(doc(db, "news", item.id), item);
     res.json({ success: true, article: item });
   } catch (err: any) {
+    console.error("POST /api/news error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-app.delete("/api/news/:id", (req, res) => {
+app.delete("/api/news/:id", async (req, res) => {
   try {
-    const db = readDb();
-    if (!db.news) db.news = [];
-    db.news = db.news.filter((n: any) => n.id !== req.params.id);
-    writeDb(db);
+    const id = req.params.id;
+    await deleteDoc(doc(db, "news", id));
     res.json({ success: true });
   } catch (err: any) {
+    console.error("DELETE /api/news/:id error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 3. Stats API Routes
-app.get("/api/stats", (req, res) => {
-  const db = readDb();
-  res.json(db.stats || []);
-});
 
-app.post("/api/stats", (req, res) => {
+// ─── FIRESTORE POWERED STATS API ROUTES ──────────────────────────────────────
+
+app.get("/api/stats", async (req, res) => {
   try {
-    const db = readDb();
-    db.stats = req.body;
-    writeDb(db);
-    res.json({ success: true, stats: db.stats });
+    const snap = await getDocs(collection(db, "stats"));
+    const list = snap.docs.map(doc => doc.data());
+    
+    // Maintain stable order
+    list.sort((a: any, b: any) => {
+      const idA = a.id || "";
+      const idB = b.id || "";
+      return idA.localeCompare(idB);
+    });
+    res.json(list);
   } catch (err: any) {
+    console.error("GET /api/stats error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 3.5 Config API Routes (e.g. Gemini API Key)
-app.get("/api/config", (req, res) => {
-  const db = readDb();
-  const apiKey = process.env.GEMINI_API_KEY || db.geminiApiKey || "";
-  let masked = "";
-  if (apiKey) {
-    masked = apiKey.length > 8 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
+app.post("/api/stats", async (req, res) => {
+  try {
+    const statsArray = req.body;
+    if (Array.isArray(statsArray)) {
+      let idx = 0;
+      for (const item of statsArray) {
+        const docId = `stat-${idx}`;
+        await setDoc(doc(db, "stats", docId), { id: docId, ...item });
+        idx++;
+      }
+    }
+    res.json({ success: true, stats: statsArray });
+  } catch (err: any) {
+    console.error("POST /api/stats error:", err);
+    res.status(500).json({ error: err.message });
   }
-
-  // Generate a default n8n news webhook token if not already present
-  if (!db.n8nWebhookToken) {
-    db.n8nWebhookToken = "noxh_danang_secret_n8n_token_" + Math.random().toString(36).substring(2, 8);
-    writeDb(db);
-  }
-
-  res.json({
-    geminiApiKeyMasked: masked,
-    hasApiKey: !!apiKey,
-    n8nWebhookToken: db.n8nWebhookToken
-  });
 });
 
-app.post("/api/config", (req, res) => {
+
+// ─── CONFIGS API ROUTES ──────────────────────────────────────────────────────
+
+app.get("/api/config", async (req, res) => {
+  try {
+    const globalSnap = await getDoc(doc(db, "configs", "global"));
+    const configData = globalSnap.exists() ? globalSnap.data() : { geminiApiKey: "", n8nWebhookToken: "" };
+
+    const apiKey = process.env.GEMINI_API_KEY || configData.geminiApiKey || "";
+    let masked = "";
+    if (apiKey) {
+      masked = apiKey.length > 8 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
+    }
+
+    let n8nToken = configData.n8nWebhookToken;
+    if (!n8nToken) {
+      n8nToken = "noxh_danang_secret_n8n_token_" + Math.random().toString(36).substring(2, 8);
+      await setDoc(doc(db, "configs", "global"), { n8nWebhookToken: n8nToken }, { merge: true });
+    }
+
+    res.json({
+      geminiApiKeyMasked: masked,
+      hasApiKey: !!apiKey,
+      n8nWebhookToken: n8nToken
+    });
+  } catch (err: any) {
+    console.error("GET /api/config error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post("/api/config", async (req, res) => {
   try {
     const { geminiApiKey, n8nWebhookToken } = req.body;
-    const db = readDb();
+    const writeData: any = {};
     
     if (geminiApiKey !== undefined) {
-      const cleanedKey = geminiApiKey.trim();
-      db.geminiApiKey = cleanedKey;
-      process.env.GEMINI_API_KEY = cleanedKey;
-      console.log("[Config Update] New Gemini API Key received through Admin Panel.");
+      writeData.geminiApiKey = geminiApiKey.trim();
+      process.env.GEMINI_API_KEY = writeData.geminiApiKey;
+      console.log("[Config Update] New Gemini API Key written to environment and Firestore configs.");
     }
 
     if (n8nWebhookToken !== undefined) {
-      db.n8nWebhookToken = n8nWebhookToken.trim();
-      console.log("[Config Update] New n8n Webhook Token saved:", db.n8nWebhookToken);
+      writeData.n8nWebhookToken = n8nWebhookToken.trim();
     }
-    
-    writeDb(db);
+
+    await setDoc(doc(db, "configs", "global"), writeData, { merge: true });
+
+    const globalSnap = await getDoc(doc(db, "configs", "global"));
+    const finalData = globalSnap.exists() ? globalSnap.data() : { geminiApiKey: "", n8nWebhookToken: "" };
+
     res.json({ 
       success: true, 
-      hasApiKey: !!(process.env.GEMINI_API_KEY || db.geminiApiKey),
-      n8nWebhookToken: db.n8nWebhookToken 
+      hasApiKey: !!(process.env.GEMINI_API_KEY || finalData.geminiApiKey),
+      n8nWebhookToken: finalData.n8nWebhookToken 
     });
   } catch (err: any) {
+    console.error("POST /api/config error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Helper templates for fast n8n fallback simulated push
+
+// ─── EXTREMELY SOPHISTICATED WEBHOCK DOCK GENERATOR ──────────────────────────
+
 function getMockNewsTemplates() {
   return [
     {
@@ -515,11 +830,8 @@ function getMockNewsTemplates() {
   ];
 }
 
-// n8n Automated News Webhook simulator using Gemini AI or Local fallback templates
 app.post("/api/news/test-push", async (req, res) => {
   try {
-    const db = readDb();
-    
     let title = "";
     let excerpt = "";
     let content = "";
@@ -528,14 +840,10 @@ app.post("/api/news/test-push", async (req, res) => {
     let image = "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800";
     let author = "Sở Xây dựng Đà Nẵng (AI n8n push)";
 
-    let apiKey = process.env.GEMINI_API_KEY || db.geminiApiKey;
-    if (apiKey) {
-      apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
-    }
+    const { ai, key } = await getLiveAIClient();
 
-    if (apiKey && apiKey !== "AIzaSy..." && apiKey !== "") {
+    if (key && key !== "AIzaSy..." && key !== "") {
       try {
-        const ai = getAIClient();
         const prompt = `Bạn là biên tập viên tin tức cho cổng thông tin Nhà Ở Xã Hội Sở Xây dựng Đà Nẵng. 
 Hãy viết một bài báo hoàn toàn MỚI, cực kỳ thời sự về tiến độ xây dựng căn hộ hoặc hướng dẫn làm thủ tục nộp hồ sơ nhà ở xã hội (NOXH) tại Đà Nẵng năm 2026.
 Hãy xuất kết quả dưới dạng JSON object hợp lệ chứa các trường sau:
@@ -594,10 +902,9 @@ Chú ý: Vui lòng TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không c�
       author = t.author;
     }
 
-    if (!db.news) db.news = [];
-    
+    const testId = "news-" + Date.now();
     const newArticle = {
-      id: "news-" + Date.now(),
+      id: testId,
       title,
       excerpt,
       content,
@@ -608,232 +915,68 @@ Chú ý: Vui lòng TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không c�
       author
     };
 
-    db.news.unshift(newArticle);
-    writeDb(db);
-
+    await setDoc(doc(db, "news", testId), newArticle);
     res.json({ success: true, article: newArticle });
   } catch (err: any) {
+    console.error("POST /api/news/test-push error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// 4. Force Reset API Route
-app.post("/api/reset-all", (req, res) => {
+
+// ─── ADMIN FORCE REST DATABASE ENDPOINT ──────────────────────────────────────
+
+app.post("/api/reset-all", async (req, res) => {
   try {
-    const defaultData = {
-      projects: [
-        {
-          id: "hoa-khanh",
-          name: "NOXH Khu công nghiệp Hòa Khánh",
-          location: "Đường số 4, KCN Hòa Khánh, Liên Chiểu, Đà Nẵng",
-          investor: "Công ty Cổ phần Địa ốc Xanh Sài Gòn Thuận Phước",
-          status: "Đang nhận hồ sơ",
-          price: "~9.4tr/m²",
-          priceRaw: 9400000,
-          progress: 80,
-          image: "https://lh3.googleusercontent.com/aida-public/AB6AXuClHteteBIbuLZyM10AFJQ6Vm9yEguYn8Qs7clGFwM6zDxRP-74dGICejZqhjdCbHvRFksQ7ZphNCcoxaXJ9P5qUF5VroQL07ZCZtV7HuqWONejByAwAjX9AvX4xaa9HvIVYG20hOYS1i2jovOGFTeL0tBLDsijo14Nms_e0DzJQ-QhXLPy7k1ShHaz-chG18MXjpzfhxNAlA31LSzYF7OeSDG7T_31W67WWmMacR1OCZSSoGYCdEqnk1eXboXQjfmf82lLGsueeA",
-          tag: "receiving",
-          coordinates: { x: 35, y: 42 },
-          lat: 16.07185,
-          lng: 108.14777,
-          districts: "Liên Chiểu",
-          scale: "8 block chung cư cao từ 12-15 tầng với gần 2,000 căn hộ",
-          types: "Căn hộ 1-2 phòng ngủ, diện tích từ 32m² đến 66m²",
-          deadline: "Dự kiến bàn giao tháp tiếp theo vào Quý IV/2026",
-          hotline: "(0236) 3789 123",
-          requirements: [
-            "Chưa sở hữu đất đai hoặc nhà ở tại Đà Nẵng",
-            "Thu nhập không đóng thuế thu nhập cá nhân thường xuyên",
-            "Có đăng ký thường trú hoặc tạm trú trên 1 năm kèm tham gia BHXH tại Đà Nẵng"
-          ]
-        },
-        {
-          id: "bau-tram",
-          name: "The Ori Garden (Bàu Tràm)",
-          location: "Khu đô thị xanh Bàu Tràm Lakeside, Liên Chiểu, Đà Nẵng",
-          investor: "Công ty Cổ phần Đầu tư Sài Gòn - Đà Nẵng (SDI)",
-          status: "Sắp mở bán",
-          price: "~12.5tr/m²",
-          priceRaw: 12500000,
-          progress: 40,
-          image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD7YJE3WIsO4fvd_AO7OmBTPkI-ZDWdiubJExkNJLnMq8VtNgUSoYxibQ5zVCTwfUs04KXiqd2_cbzbTdFeGFk4gLn2_AEc38-uBavo7ou3TT-qySuBE-1NU4kYvxRIYOxfPWAWjZYOl3P5AE-0H6mkQw9ardc8CyQF8OxjGV2tKx8OLe59A4-jri_C2yJPvLBRb7d7-mNOHdFilb8vvxmHE3usclVcwD9RmH4pqHbx1QEekC4cnd0bDh5ydfv9uaiy9H6rfPV_th8",
-          tag: "coming_soon",
-          coordinates: { x: 30, y: 48 },
-          lat: 16.08889,
-          lng: 108.14300,
-          districts: "Liên Chiểu",
-          scale: "Hơn 3,000 căn hộ chất lượng cao phong cách Nhật Bản với hệ sinh thái khép kín",
-          types: "Căn hộ từ 35.3m² đến 70m² (Studio, 1 PN + 1, 2 PN, 3 PN)",
-          deadline: "Dự kiến mở bán giai đoạn 2 vào tháng 8/2026",
-          hotline: "(0236) 3999 888",
-          requirements: [
-            "Chưa từng đứng tên sở hữu đất nền hay nhà ở tại địa bàn TP. Đà Nẵng",
-            "Là công nhân, viên chức, cán bộ hoặc người lao động tự do có thu nhập thấp dưới quy định",
-            "Thủ tục đăng ký xét duyệt và tính điểm ưu tiên thông qua Sở Xây dựng Đà Nẵng"
-          ]
-        },
-        {
-          id: "nai-hien-dong",
-          name: "Chung cư thu nhập thấp Nại Hiên Đông",
-          location: "Phường Nại Hiên Đông, Sơn Trà, Đà Nẵng",
-          investor: "Công ty Cổ phần Đầu tư và Phát triển Nhà Đà Nẵng",
-          status: "Đã bàn giao",
-          price: "Đã hết quỹ",
-          priceRaw: 8500000,
-          progress: 100,
-          image: "https://lh3.googleusercontent.com/aida-public/AB6AXuASYE2FhNKpl8F_zuy1X8hjyLCbWY66kSKmP4q5ONDxLl9Y-NBt3D7omVwbuoxIhw7JxLEfR5oy9B7bm6c2JwS5FhWZr4DdQ334SJDw6Nd6wb_n0vv8owtIAdxmdQ4xtGO85QLmczzYV2k6IG6MXtHVEy_x3HQXI81W3mjQt52ym6uuWx2jMA2Ynz_aDLTxX73IVMTWPGZrFAw3GTTf5kyy2-OeDESxVFC1oBEPk779WUB38z6niHZOOCM9b-fvzjz6B8aIys3Vo5k",
-          tag: "completed",
-          coordinates: { x: 65, y: 32 },
-          lat: 16.09631,
-          lng: 108.23277,
-          districts: "Sơn Trà",
-          scale: "5 block chung cư cao từ 7-12 tầng phục vụ người có thu nhập thấp quận Sơn Trà",
-          types: "Diện tích căn hộ trung bình từ 45m² đến 60m² rộng rãi",
-          deadline: "Đã hoàn thành bàn giao và đi vào vận hành ổn định lâu dài",
-          hotline: "(0236) 3111 222",
-          requirements: [
-            "Chính sách ưu tiên cho hộ nghèo giải tỏa tái định cư tại Sơn Trà",
-            "Người dân thuộc diện chính sách được phê duyệt đặc biệt của thành phố",
-            "Hiện được vận hành ổn định bởi Ban quản lý Nhà chung cư Đà Nẵng"
-          ]
-        },
-        {
-          id: "an-phu-dong",
-          name: "NOXH An Phú Đông Cẩm Lệ",
-          location: "Phường Hòa Thọ Đông, Cẩm Lệ, Đà Nẵng",
-          investor: "Sở Xây dựng Đà Nẵng phối hợp Liên minh HTX",
-          status: "Sắp mở bán",
-          price: "~11.8tr/m²",
-          priceRaw: 11800000,
-          progress: 15,
-          image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-          tag: "coming_soon",
-          coordinates: { x: 45, y: 70 },
-          lat: 16.01429,
-          lng: 108.19634,
-          districts: "Cẩm Lệ",
-          scale: "Dự án gồm 2 tòa tháp hiện đại cao 15 tầng với khuôn viên xanh mát, bãi đỗ xe rộng rãi",
-          types: "Diện tích từ 40m² đến 65m² (1-2 phòng ngủ, tối ưu ánh sáng tự nhiên)",
-          deadline: "Dự kiến bàn giao vào Quý I/2028, nhận hồ sơ thẩm định trước tháng 12/2026",
-          hotline: "(0236) 3888 777",
-          requirements: [
-            "Ưu tiên công chức, viên chức trẻ làm việc tại Trung tâm Hành chính quận Cẩm Lệ",
-            "Hộ gia đình có hoàn cảnh khó khăn chưa sở hữu đất và tài sản gắn liền với đất tại TP. Đà Nẵng",
-            "Nộp đơn đăng ký kèm giấy xác nhận nhà ở thông qua tổ dân phố và phường"
-          ]
-        },
-        {
-          id: "nam-cau-tuyen-son",
-          name: "Chung cư Xã hội Nam Cầu Tuyên Sơn",
-          location: "Khu đô thị Nam Cầu Tuyên Sơn, Ngũ Hành Sơn, Đà Nẵng",
-          investor: "Tập đoàn Đầu tư Đất Xanh Miền Trung và thành phố",
-          status: "Đang nhận hồ sơ",
-          price: "~14.2tr/m²",
-          priceRaw: 14200000,
-          progress: 90,
-          image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
-          tag: "receiving",
-          coordinates: { x: 72, y: 55 },
-          lat: 16.02708,
-          lng: 108.23594,
-          districts: "Ngũ Hành Sơn",
-          scale: "Thiết kế thông minh lồng ghép khu thương mại nhỏ, công viên và nhà cộng đồng",
-          types: "Căn hộ 2 phòng ngủ diện tích đa dạng từ 48m² - 68m²",
-          deadline: "Bàn giao căn hộ đầu tiên vào tháng 10/2026, đợt nhận hồ sơ cuối kết thúc ngày 30/08/2026",
-          hotline: "(0236) 3555 444",
-          requirements: [
-            "Người lao động cư trú tại quận Ngũ Hành Sơn hoặc giáp ranh Cẩm Lệ, Sơn Trà",
-            "Có đóng bảo hiểm xã hội tại TP. Đà Nẵng tối thiểu 12 tháng liên tục",
-            "Bảo đảm điều kiện thu nhập không thuộc đối tượng nộp thuế TNCN đóng tại địa phương"
-          ]
-        },
-        {
-          id: "lien-chieu-eco",
-          name: "Nhà ở xã hội Eco Home Liên Chiểu",
-          location: "Phường Hòa Khánh Bắc, Liên Chiểu, Đà Nẵng",
-          investor: "Tập đoàn đầu tư Địa ốc Eco Việt Nam",
-          status: "Sắp mở bán",
-          price: "~10.5tr/m²",
-          priceRaw: 10500000,
-          progress: 25,
-          image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800",
-          tag: "coming_soon",
-          coordinates: { x: 25, y: 35 },
-          lat: 16.07542,
-          lng: 108.13689,
-          districts: "Liên Chiểu",
-          scale: "Khu chung cư phức hợp gồm 3 block căn hộ tiện nghi với hồ bơi và khu vui chơi ngoài trời cho bé",
-          types: "Diện tích linh hoạt từ 45m² đến 62m² tinh tế, chuẩn xanh",
-          deadline: "Dự kiến bàn giao tháp A vào Quý II/2027",
-          hotline: "(0236) 3666 999",
-          requirements: [
-            "Người dân có hộ khẩu tại Liên Chiểu chưa sở hữu nhà",
-            "Có thu nhập thực tế trung bình dưới 11 triệu đồng/tháng của cá nhân đăng ký",
-            "Xem xét các điểm ưu tiên như đóng góp xã hội, gia đình chính sách hoặc hoàn cảnh đặc biệt"
-          ]
-        }
-      ],
-      news: [
-        {
-          id: "news-1",
-          title: "Đà Nẵng công bố đề án phát triển 10.000 căn hộ nhà ở xã hội đến năm 2030",
-          excerpt: "UBND thành phố vừa thông qua lộ trình phân bổ quỹ đất xây dựng định hướng chuỗi dự án trọng vùng tại quận Liên Chiểu, Cẩm Lệ, Ngũ Hành Sơn nhằm đảm bảo nơi an cư cho người lao động, gia đình cận nghèo địa phương.",
-          content: "Chiều ngày 20/5/2026, UBND TP. Đà Nẵng đã chính thức ký duyệt Đề án quy hoạch tổng thể nhà ở xã hội (NOXH) giai đoạn 2026 - 2030. \n\nMục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 10.000 căn hộ chất lượng cao với các chính sách trợ giá hấp dẫn. Trong đó, tập trung khai thác đồng bộ các khu đô thị vệ tinh xung quanh khu công nghiệp Hòa Khánh, khu công nghệ cao Đà Nẵng và dọc theo các trục giao thông chính của thành phố.\n\nSở Xây dựng Đà Nẵng sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.",
-          date: "20/05/2026",
-          category: "Announcement",
-          categoryLabel: "Thông Báo Sửa",
-          image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-          author: "Văn phòng Sở Xây dựng Đà Nẵng"
-        },
-        {
-          id: "news-2",
-          title: "Hướng dẫn xác nhận điều kiện nhà ở bình quân đạt chuẩn dưới 15m² sàn/người",
-          excerpt: "Cẩm nang chi tiết hướng dẫn công dân nộp đơn trực tiếp tại cơ quan UBND Phường/Xã để lấy đóng dấu mộc xác nhận diện tích nhà ở bình quân theo Nghị định số 54/2026/NĐ-CP mới ban hành.",
-          content: "Theo Nghị định số 54/2026/NĐ-CP của Chính phủ chính thức áp dụng sửa đổi Luật Nhà ở, điều kiện về thực trạng nhà ở của hộ gia đình chính thức nâng hạn mức diện tích bình quân đầu người lên tối đa 15 m² sàn/người (thay vì 10 m² sàn như quy định cũ).\n\nĐây là tin vui lớn, mở rộng cửa cho hàng nghìn hộ gia đình khó khăn có đông con em sinh sống chen chúc tại khu vực đô thị Đà Nẵng có cơ hội tiếp cận NOXH.\n\n**Quy trình hồ sơ xin xác nhận:**\n1. Người đứng đơn tải xuống Mẫu Đơn xác nhận diện tích nhà ở bình quân (Mẫu 03 Phụ lục Nghị định).\n2. Kê khai đúng danh sách thành viên cùng đăng ký thường trú tại căn nhà hiện tại.\n3. Nộp hồ sơ tại UBND cấp Xã/Phường nơi đăng ký thường trú. UBND cấp xã có nhiệm vụ xác minh thực tế, phản hồi giải quyết đóng dấu đỏ phê duyệt trong thời hạn tối đa 07 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ.",
-          date: "14/05/2026",
-          category: "Policy",
-          categoryLabel: "Phân Tích Chính Sách",
-          image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
-          author: "Phòng Quản lý nhà và thị trường Bất Động Sản"
-        },
-        {
-          id: "news-3",
-          title: "Danh sách bốc thăm đợt 1 dự án chung cư NOXH tại Liên Chiểu",
-          excerpt: "Công khai kết quả thẩm định điểm và công bố số lượng căn hộ bốc thăm cụ thể thuộc Dự án Căn hộ Sun Garden Liên Chiểu. Tổng cộng có 350 căn hoàn tất bàn bàn giao kỹ thuật.",
-          content: "Sở Xây dựng thành phố Đà Nẵng đã phối hợp cùng Công ty Liên doanh Phát triển Đô thị Sun Garden tổ chức nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.\n\nDự án Sun Garden Liên Chiểu ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó Sở đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).\n\nBuổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám sát trực tiếp của cơ quan thanh tra thành phố vào sáng ngày 01/06/2026 tại Nhà văn hóa quận Liên Chiểu và truyền hình trực tuyến qua cổng dữ liệu thông tin đại chúng.",
-          date: "05/05/2026",
-          category: "Construction",
-          categoryLabel: "Tiến Độ Dự Án",
-          image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
-          author: "Hội đồng Thẩm định dự án Đà Nẵng"
-        },
-        {
-          id: "news-4",
-          title: "Cảnh báo mạo danh chuyên viên ban ngành Sở để nhận tiền 'cọc giữ chỗ' nhà ở xã hội",
-          excerpt: "Sở Xây dựng Đà Nẵng đưa ra thông báo khẩn cấp khuyến cáo người lao động tránh các hội nhóm môi giới thu phí hoa hồng để đặt chỗ mua căn hộ trái luật.",
-          content: "Sở Xây dựng thành phố Đà Nẵng vừa phát đi thông báo khẩn số 112/TB-SXD về việc phát hiện một số đối tượng, sàn giao dịch bất động sản mạo danh là chuyên viên Ban chính sách nhà ở để thu nhận phí dịch vụ, tiền cọc 'đảm bảo 100% bốc trúng' căn hộ NOXH tại khu vực quận Ngũ Hành Sơn.\n\nSở Xây dựng tái khẳng định:\n- Tất cả quy trình tiếp nhận, hướng dẫn khai phôi đơn và thẩm duyệt chấm điểm hồ sơ hoàn toàn **MIỄN PHÍ** 100%.\n- Không hề có bất kỳ ủy quyền môi giới trung gian cho bất kỳ đơn vị sàn thương mại tự do nào.\n- Mọi hình thức hứa hẹn giữ chỗ đóng tiền mặt đều là hành vi gian lận pháp luật, người dân khi phát hiện vui lòng trình báo ngay cho cơ quan công an quận gần nhất để kịp thời can thiệp xử lý hình sự.",
-          date: "28/04/2026",
-          category: "Announcement",
-          categoryLabel: "Tin Cảnh Giác",
-          image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800",
-          author: "Văn phòng Thanh tra xây dựng thành phố"
-        }
-      ],
-      stats: [
-        { count: "15", label: "Tổng dự án NOXH", subDec: "Đang triển khai quy hoạch", icon: "domain" },
-        { count: "12.4k", label: "Tổng số căn hộ", subDec: "Sản phẩm bàn giao", icon: "vpn_key" },
-        { count: "8,540", label: "Đơn hồ sơ thụ lý", subDec: "Tiếp nhận trực tiếp ở Sở", icon: "drafts" },
-        { count: "92%", label: "Tỷ lệ giải quyết", subDec: "Hoàn thiện duyệt thành công", icon: "task_alt" }
-      ]
-    };
-    writeDb(defaultData);
-    res.json({ success: true, db: defaultData });
+    console.log("[Firebase Reset] Clearing existing documents and applying core presets...");
+
+    // 1. Projects Clear & Re-seed
+    const pSnap = await getDocs(collection(db, "projects"));
+    for (const d of pSnap.docs) {
+      await deleteDoc(doc(db, "projects", d.id));
+    }
+    for (const item of DEFAULT_PROJECTS) {
+      await setDoc(doc(db, "projects", item.id), item);
+    }
+
+    // 2. News Clear & Re-seed
+    const nSnap = await getDocs(collection(db, "news"));
+    for (const d of nSnap.docs) {
+      await deleteDoc(doc(db, "news", d.id));
+    }
+    for (const item of DEFAULT_NEWS) {
+      await setDoc(doc(db, "news", item.id), item);
+    }
+
+    // 3. Stats Clear & Re-seed
+    const sSnap = await getDocs(collection(db, "stats"));
+    for (const d of sSnap.docs) {
+      await deleteDoc(doc(db, "stats", d.id));
+    }
+    let idx = 0;
+    for (const item of DEFAULT_STATS) {
+      const docId = `stat-${idx}`;
+      await setDoc(doc(db, "stats", docId), { id: docId, ...item });
+      idx++;
+    }
+
+    res.json({ 
+      success: true, 
+      db: {
+        projects: DEFAULT_PROJECTS,
+        news: DEFAULT_NEWS,
+        stats: DEFAULT_STATS
+      } 
+    });
   } catch (err: any) {
+    console.error("POST /api/reset-all error:", err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Serve Vite on dev, static on prod
+
+// ─── VITE STARTER SERVING ───────────────────────────────────────────────────
+
 if (process.env.NODE_ENV !== "production") {
   const vite = createViteServer({
     server: { middlewareMode: true },

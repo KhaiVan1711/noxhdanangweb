@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Projects collection rules
+    match /projects/{projectId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // News collection rules
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Stats collection rules
+    match /stats/{statId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Configs collection rules (safe for public update in this no-auth architecture)
+    match /configs/{configId} {
+      allow read: if true;
+      allow write: if true;
+    }
+  }
+}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { Project } from "./types";
 import { ProjectCard } from "./components/ProjectCard";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "./firebase";
 import { GisMap } from "./components/GisMap";
 import { DocumentRequirements } from "./components/DocumentRequirements";
 import { NewsSection } from "./components/NewsSection";
@@ -65,7 +67,7 @@ export default function App() {
   // FAQ accordion support
   const [expandedFaqId, setExpandedFaqId] = useState<number | null>(null);
 
-  // Load project records and statistics dynamically
+  // Load project records and statistics dynamically (fallback/initial)
   const loadMasterData = async () => {
     try {
       const res = await fetch("/api/projects");
@@ -100,11 +102,54 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadMasterData();
+    // 1. Subscribe to Live Firestore Projects in Real-time
+    const unsubscribeProjects = onSnapshot(
+      collection(db, "projects"),
+      (snapshot) => {
+        const liveProj = snapshot.docs.map(doc => doc.data() as Project);
+        if (liveProj.length > 0) {
+          setProjects(liveProj);
+          setGisSelectedProject((currentSelected) => {
+            const exists = liveProj.find((p) => p.id === currentSelected?.id);
+            return exists || liveProj[0];
+          });
+        } else {
+          loadMasterData();
+        }
+        setLoading(false);
+      },
+      (err) => {
+        console.error("Realtime projects connection failed, falling back:", err);
+        loadMasterData();
+      }
+    );
 
-    // Listen for refresh event from Admin Panel for real-time local updates
+    // 2. Subscribe to Live Firestore Stats in Real-time
+    const unsubscribeStats = onSnapshot(
+      collection(db, "stats"),
+      (snapshot) => {
+        const liveStats = snapshot.docs.map(doc => doc.data());
+        liveStats.sort((a: any, b: any) => {
+          const idA = a.id || "";
+          const idB = b.id || "";
+          return idA.localeCompare(idB);
+        });
+        if (liveStats && liveStats.length > 0) {
+          setStats(liveStats);
+        }
+      },
+      (err) => {
+        console.error("Realtime stats subscription error:", err);
+      }
+    );
+
+    // Keep event listener for safety
     window.addEventListener("refresh-noxh-data", loadMasterData);
-    return () => window.removeEventListener("refresh-noxh-data", loadMasterData);
+    return () => {
+      unsubscribeProjects();
+      unsubscribeStats();
+      window.removeEventListener("refresh-noxh-data", loadMasterData);
+    };
   }, []);
 
   const handleHeroSearchSubmit = (e: React.FormEvent) => {

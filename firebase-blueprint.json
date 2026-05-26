@@ -1,0 +1,92 @@
+{
+  "entities": {
+    "Project": {
+      "title": "Project",
+      "description": "Nhà ở xã hội Project details",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier for the project" },
+        "name": { "type": "string", "description": "Tên dự án" },
+        "location": { "type": "string", "description": "Địa chỉ dự án" },
+        "investor": { "type": "string", "description": "Chủ đầu tư" },
+        "status": { "type": "string", "description": "Trạng thái tiếp nhận hồ sơ" },
+        "price": { "type": "string", "description": "Mức giá công bố dạng chuỗi" },
+        "priceRaw": { "type": "number", "description": "Mức giá hiển thị dạng số" },
+        "progress": { "type": "number", "description": "Tiến độ thi công %" },
+        "image": { "type": "string", "description": "URL hình ảnh" },
+        "tag": { "type": "string", "description": "Mã trạng thái ví dụ: receiving, coming_soon, completed" },
+        "lat": { "type": "number", "description": "Kinh độ" },
+        "lng": { "type": "number", "description": "Vĩ độ" },
+        "districts": { "type": "string", "description": "Quận huyện thuộc Đà Nẵng" },
+        "scale": { "type": "string", "description": "Quy mô dự án" },
+        "types": { "type": "string", "description": "Loại căn hộ diện tích" },
+        "deadline": { "type": "string", "description": "Dự kiến bàn giao" },
+        "hotline": { "type": "string", "description": "Số điện thoại nóng tư vấn" },
+        "requirements": {
+          "type": "array",
+          "description": "Yêu cầu / Tiêu chí dự án đặc thù"
+        }
+      },
+      "required": ["id", "name"]
+    },
+    "News": {
+      "title": "News",
+      "description": "Tin tức chính sách và thông báo Sở Xây dựng",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "title": { "type": "string", "description": "Tiêu đề bài viết" },
+        "excerpt": { "type": "string", "description": "Tóm tắt bài viết" },
+        "content": { "type": "string", "description": "Nội dung đầy đủ" },
+        "date": { "type": "string", "description": "Ngày tháng năm xuất bản" },
+        "category": { "type": "string", "description": "Loại phân loại" },
+        "categoryLabel": { "type": "string", "description": "Nhãn danh mục tiếng Việt" },
+        "image": { "type": "string", "description": "URL hình ảnh đại diện" },
+        "author": { "type": "string", "description": "Tác giả bài viết" }
+      },
+      "required": ["id", "title"]
+    },
+    "Stat": {
+      "title": "Stat",
+      "description": "Chỉ số thống kê từ Sở Xây dựng",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Mã chỉ mục ví dụ: stat-1" },
+        "count": { "type": "string", "description": "Chỉ số hiển thị ví dụ: 15, 12.4k" },
+        "label": { "type": "string", "description": "Tên nhãn chỉ số" },
+        "subDec": { "type": "string", "description": "Chú thích dưới" },
+        "icon": { "type": "string", "description": "Tên Icon đại diện" }
+      },
+      "required": ["id", "label"]
+    },
+    "Config": {
+      "title": "Config",
+      "description": "Bảo mật cấu hình hệ thống",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Mã cấu hình ví dụ: global" },
+        "geminiApiKey": { "type": "string", "description": "API Key của Google Gemini" },
+        "n8nWebhookToken": { "type": "string", "description": "Webhook Token xác thực n8n" }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/projects/{projectId}": {
+      "schema": "Project",
+      "description": "Danh sách dự án NOXH Thành phố Đà Nẵng"
+    },
+    "/news/{newsId}": {
+      "schema": "News",
+      "description": "Danh mục điểm tin chính sách, quyết định, phân tích quy hoạch"
+    },
+    "/stats/{statId}": {
+      "schema": "Stat",
+      "description": "Các chỉ số thống kê vận hành NOXH của Sở Xây dựng"
+    },
+    "/configs/{configId}": {
+      "schema": "Config",
+      "description": "Thiết lập cấu hình API và Webhook Token bí mật"
+    }
+  }
+}
