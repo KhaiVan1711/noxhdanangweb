@@ -41,7 +41,7 @@ export function AdminPanel() {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
 
-  const [activeSubTab, setActiveSubTab] = useState<"projects" | "news" | "stats">("projects");
+  const [activeSubTab, setActiveSubTab] = useState<"projects" | "news" | "stats" | "config">("projects");
   
   // Data lists
   const [projects, setProjects] = useState<Project[]>([]);
@@ -54,6 +54,12 @@ export function AdminPanel() {
   const [editingNews, setEditingNews] = useState<Partial<Article> | null>(null);
   const [isResetting, setIsResetting] = useState(false);
   const [successToast, setSuccessToast] = useState("");
+
+  // Config states
+  const [geminiApiKey, setGeminiApiKey] = useState("");
+  const [maskedKey, setMaskedKey] = useState("");
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [savingConfig, setSavingConfig] = useState(false);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -69,10 +75,47 @@ export function AdminPanel() {
       // Fetch stats
       const resStats = await fetch("/api/stats");
       if (resStats.ok) setStats(await resStats.json());
+
+      // Fetch API Key Config
+      const resConfig = await fetch("/api/config");
+      if (resConfig.ok) {
+        const configData = await resConfig.json();
+        setMaskedKey(configData.geminiApiKeyMasked || "");
+        setHasApiKey(configData.hasApiKey || false);
+      }
     } catch (err) {
       console.error("Lỗi đồng bộ dữ liệu:", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingConfig(true);
+    try {
+      const res = await fetch("/api/config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ geminiApiKey })
+      });
+      if (res.ok) {
+        showToast("Đã cập nhật khóa Gemini API Key thành công!");
+        setGeminiApiKey("");
+        // Reload configurations
+        const resConfig = await fetch("/api/config");
+        if (resConfig.ok) {
+          const configData = await resConfig.json();
+          setMaskedKey(configData.geminiApiKeyMasked || "");
+          setHasApiKey(configData.hasApiKey || false);
+        }
+      } else {
+        alert("Có lỗi xảy ra khi lưu API Key!");
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSavingConfig(false);
     }
   };
 
@@ -296,18 +339,19 @@ export function AdminPanel() {
       </div>
 
       {/* Primary tab switcher */}
-      <div className="flex border-b border-slate-200 gap-4">
+      <div className="flex border-b border-slate-200 gap-4 overflow-x-auto">
         {[
           { id: "projects", label: "Quản lý Dự án", count: projects.length, icon: Building },
           { id: "news", label: "Quản lý Tin tức", count: news.length, icon: Newspaper },
-          { id: "stats", label: "Chỉ số Thống kê", icon: Sliders }
+          { id: "stats", label: "Chỉ số Thống kê", icon: Sliders },
+          { id: "config", label: "Cấu hình & API Key", icon: KeyRound }
         ].map((sub) => {
           const Icon = sub.icon;
           return (
             <button
               key={sub.id}
               onClick={() => setActiveSubTab(sub.id as any)}
-              className={`pb-3.5 px-4 font-sans text-xs md:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer ${
+              className={`pb-3.5 px-4 font-sans text-xs md:text-sm font-bold flex items-center gap-1.5 border-b-2 transition-all cursor-pointer whitespace-nowrap ${
                 activeSubTab === sub.id
                   ? "border-[#00355f] text-[#00355f]"
                   : "border-transparent text-slate-500 hover:text-slate-700"
@@ -564,6 +608,116 @@ export function AdminPanel() {
                 <Save className="h-4.5 w-4.5" />
                 <span>Cập nhật số liệu tức thì</span>
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: CONFIG & GEMINI API KEY */}
+        {activeSubTab === "config" && (
+          <div className="bg-white border border-slate-150 rounded-3xl p-6.5 shadow-sm space-y-6">
+            <div>
+              <h3 className="font-sans font-bold text-slate-800 text-sm md:text-base uppercase">CẤU HÌNH AI BOT & GEMINI API KEY</h3>
+              <p className="text-xs text-slate-400 mt-1 font-medium">Cài đặt trực tiếp khóa API Gemini AI để kích hoạt chức năng Trợ lý ảo NOXH Bot đa tài năng.</p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Note / Instruction */}
+              <div className="lg:col-span-2 space-y-4 text-xs text-slate-650 leading-relaxed border-r border-slate-100 pr-0 lg:pr-6">
+                <div className="p-4 bg-blue-50/50 border border-blue-100 text-blue-800 rounded-2xl flex items-start gap-3">
+                  <ShieldAlert className="h-5 w-5 shrink-0 text-blue-700 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold uppercase tracking-wide text-xs mb-1">Cách cấu hình tối ưu trên Render hoặc Máy chủ đám mây</h4>
+                    <p className="mb-2">Do bạn đã xuất bản (public) hệ thống này sang Render, cách tốt nhất và bảo mật nhất là đặt biến môi trường trong trang quản lí của Render:</p>
+                    <ol className="list-decimal list-inside space-y-1.5 font-medium ml-1">
+                      <li>Truy cập vào trang quản trị <b>Render Dashboard</b>.</li>
+                      <li>Chọn dịch vụ ứng dụng của bạn (Web Service).</li>
+                      <li>Vào tab <b>Environment</b> (Biến môi trường).</li>
+                      <li>Thêm một biến mới với tên là <code className="bg-blue-100/80 px-1 border border-blue-250 rounded font-mono text-[11px] font-black">GEMINI_API_KEY</code> và điền giá trị Khóa API của bạn vào đó.</li>
+                      <li>Nhấn <b>Save Changes</b> để Render tự động tải lại máy chủ và khởi chạy chatbot tối tân!</li>
+                    </ol>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-amber-50/50 border border-amber-100 text-amber-900 rounded-2xl flex items-start gap-3">
+                  <KeyRound className="h-5 w-5 shrink-0 text-amber-700 mt-0.5" />
+                  <div>
+                    <h4 className="font-bold uppercase tracking-wide text-xs mb-1">Cách cấu hình nhanh trực tiếp tại đây</h4>
+                    <p>Nếu bạn không muốn thay đổi trên Render hoặc muốn cập nhật tức thì phục vụ mục đích test nhanh, bạn có thể lưu trực tiếp Khóa API ngay trong form bên phải. Chìa khóa sẽ được mã hóa và lưu trữ an toàn trong tệp cơ sở dữ liệu <code className="bg-amber-150 px-1 rounded font-mono text-[11px] font-bold">db_noxh.json</code> của dự án của bạn và có thể sử dụng được ngay tức khắc mà không cần khởi động lại máy chủ.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Form Input */}
+              <div className="space-y-5 bg-slate-50/50 border border-slate-200/60 p-6 rounded-2.5xl">
+                <div>
+                  <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase mb-1">Trạng thái hiện tại</span>
+                  {hasApiKey ? (
+                    <div className="flex items-center gap-2 text-emerald-750 font-sans font-extrabold text-xs">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                      <span>ĐÃ CẤU HÌNH ({maskedKey})</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-rose-600 font-sans font-extrabold text-xs">
+                      <span className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                      <span>CHƯA CẤU HÌNH (Chạy chế độ mô phỏng)</span>
+                    </div>
+                  )}
+                </div>
+
+                <form onSubmit={handleSaveConfig} className="space-y-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-500 block mb-1 uppercase tracking-wider">Khóa API Mới (Gemini API Key)</label>
+                    <input
+                      type="password"
+                      value={geminiApiKey}
+                      onChange={(e) => setGeminiApiKey(e.target.value)}
+                      placeholder="Nhập khóa AIzaSy... mới để ghi đè"
+                      className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-mono font-medium"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="submit"
+                      disabled={savingConfig || !geminiApiKey.trim()}
+                      className="flex-1 py-3 bg-[#00355f] hover:bg-[#002646] text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-1.5 transition-all shadow cursor-pointer disabled:opacity-50"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>{savingConfig ? "Đang lưu..." : "Lưu Khóa API"}</span>
+                    </button>
+                    
+                    {hasApiKey && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          if (!window.confirm("Bạn có chắc chắn muốn xóa khóa API Gemini đang lưu? Hệ thống sẽ quay trở lại chế độ mô phỏng.")) return;
+                          try {
+                            const res = await fetch("/api/config", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ geminiApiKey: "" })
+                            });
+                            if (res.ok) {
+                              showToast("Đã xóa khóa cứu hộ thành công!");
+                              const resConfig = await fetch("/api/config");
+                              if (resConfig.ok) {
+                                const configData = await resConfig.json();
+                                setMaskedKey(configData.geminiApiKeyMasked || "");
+                                setHasApiKey(configData.hasApiKey || false);
+                              }
+                            }
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="px-3.5 py-3 border border-rose-250 hover:bg-rose-50 text-rose-600 hover:text-rose-705 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                      >
+                        Xóa
+                      </button>
+                    )}
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}

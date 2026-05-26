@@ -20,6 +20,18 @@ let lastUsedApiKey: string | undefined = undefined;
 function getAIClient() {
   dotenv.config({ override: true });
   let apiKey = process.env.GEMINI_API_KEY;
+  
+  if (!apiKey) {
+    try {
+      const db = readDb();
+      if (db && db.geminiApiKey) {
+        apiKey = db.geminiApiKey;
+      }
+    } catch (e) {
+      // ignore read errors on initialization
+    }
+  }
+
   if (apiKey) {
     apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
   }
@@ -28,7 +40,7 @@ function getAIClient() {
     const masked = apiKey.length > 10 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
     console.log(`[AI Client Info] Using API Key: ${masked}`);
   } else {
-    console.warn("[AI Client Info] No GEMINI_API_KEY found in process.env");
+    console.warn("[AI Client Info] No GEMINI_API_KEY found in process.env or db_noxh.json");
   }
 
   if (!aiClient || lastUsedApiKey !== apiKey) {
@@ -118,7 +130,7 @@ ${statsList}
 `;
 
     const ai = getAIClient();
-    let apiKey = process.env.GEMINI_API_KEY;
+    let apiKey = process.env.GEMINI_API_KEY || db.geminiApiKey;
     if (apiKey) {
       apiKey = apiKey.replace(/^["']|["']$/g, "").trim();
     }
@@ -400,6 +412,39 @@ app.post("/api/stats", (req, res) => {
     db.stats = req.body;
     writeDb(db);
     res.json({ success: true, stats: db.stats });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3.5 Config API Routes (e.g. Gemini API Key)
+app.get("/api/config", (req, res) => {
+  const db = readDb();
+  const apiKey = process.env.GEMINI_API_KEY || db.geminiApiKey || "";
+  let masked = "";
+  if (apiKey) {
+    masked = apiKey.length > 8 ? `${apiKey.slice(0, 6)}...${apiKey.slice(-4)}` : "***";
+  }
+  res.json({
+    geminiApiKeyMasked: masked,
+    hasApiKey: !!apiKey
+  });
+});
+
+app.post("/api/config", (req, res) => {
+  try {
+    const { geminiApiKey } = req.body;
+    const db = readDb();
+    
+    if (geminiApiKey !== undefined) {
+      const cleanedKey = geminiApiKey.trim();
+      db.geminiApiKey = cleanedKey;
+      process.env.GEMINI_API_KEY = cleanedKey;
+      console.log("[Config Update] New Gemini API Key received through Admin Panel.");
+    }
+    
+    writeDb(db);
+    res.json({ success: true, hasApiKey: !!(process.env.GEMINI_API_KEY || db.geminiApiKey) });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

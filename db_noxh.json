@@ -1,153 +1,136 @@
 {
   "projects": [
     {
-      "id": "hoa-khanh",
-      "name": "NOXH Khu công nghiệp Hòa Khánh",
-      "location": "Đường số 4, KCN Hòa Khánh, Phường Hòa Khánh Bắc, Đà Nẵng",
-      "investor": "Công ty Cổ phần Địa ốc Xanh Sài Gòn Thuận Phước",
-      "status": "Đang nhận hồ sơ",
-      "price": "~9.4tr/m²",
-      "priceRaw": 9400005,
-      "progress": 80,
+      "id": "ecohome-hoa-hiep",
+      "name": "Ecohome Hòa Hiệp",
+      "location": "Khu tái định cư Hòa Hiệp 4, Phường Hải Vân, Quận Liên Chiểu, Đà Nẵng",
+      "investor": "Capital House",
+      "status": "Đang mở bán",
+      "price": "~20.8tr/m²",
+      "priceRaw": 20800000,
+      "progress": 85,
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD7YJE3WIsO4fvd_AO7OmBTPkI-ZDWdiubJExkNJLnMq8VtNgUSoYxibQ5zVCTwfUs04KXiqd2_cbzbTdFeGFk4gLn2_AEc38-uBavo7ou3TT-qySuBE-1NU4kYvxRIYOxfPWAWjZYOl3P5AE-0H6mkQw9ardc8CyQF8OxjGV2tKx8OLe59A4-jri_C2yJPvLBRb7d7-mNOHdFilb8vvxmHE3usclVcwD9RmH4pqHbx1QEekC4cnd0bDh5ydfv9uaiy9H6rfPV_th8",
+      "tag": "receiving",
+      "coordinates": {
+        "x": 28,
+        "y": 25
+      },
+      "lat": 16.1236,
+      "lng": 108.1187,
+      "districts": "Liên Chiểu",
+      "scale": "Cơ cấu 1,852 căn hộ (1,476 căn hộ xã hội & 376 căn thương mại). Mở bán NOXH01 (391 căn) & NOXH02 (1085 căn). Vốn đầu tư 2100 tỷ, quy mô 4.27 ha.",
+      "types": "Các căn hộ 1PN, 2PN, 3PN với diện tích từ 40m² đến 75m²",
+      "deadline": "Đang tiếp nhận hồ sơ xét tuyển và mở bán",
+      "hotline": "0971055585",
+      "requirements": [
+        "Người thu nhập thấp",
+        "Công nhân",
+        "Cán bộ công chức",
+        "Người chưa có nhà ở"
+      ]
+    },
+    {
+      "id": "viet-huong-lakeside",
+      "name": "Việt Hương Lakeside",
+      "location": "Nam Cầu Cẩm Lệ, Phường Hòa Xuân, Quận Cẩm Lệ, Đà Nẵng",
+      "investor": "Việt Hương Group",
+      "status": "Tiếp nhận hồ sơ",
+      "price": "~20.6tr/m²",
+      "priceRaw": 20600000,
+      "progress": 60,
+      "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
+      "tag": "receiving",
+      "coordinates": {
+        "x": 48,
+        "y": 72
+      },
+      "lat": 15.9985,
+      "lng": 108.2214,
+      "districts": "Cẩm Lệ",
+      "scale": "Dự án gồm 849 căn hộ nhà ở xã hội đồng bộ với đầy đủ công viên, khu thương mại, nhà trẻ và bãi đỗ xe rộng rãi.",
+      "types": "Diện tích căn hộ tinh giản từ 30m² lên tới 70m²",
+      "deadline": "Đang trong giai đoạn thu nhận và thẩm định hồ sơ",
+      "hotline": "0905 123 456",
+      "requirements": [
+        "Chưa có nhà ở, thu nhập diện không chịu thuế thu nhập cá nhân"
+      ]
+    },
+    {
+      "id": "dai-dia-bao",
+      "name": "Đại Địa Bảo",
+      "location": "Phạm Huy Thông, Quận Sơn Trà, Đà Nẵng",
+      "investor": "DMC-579",
+      "status": "Mở bán",
+      "price": "~17.0tr - 20.0tr/m²",
+      "priceRaw": 17000000,
+      "progress": 95,
+      "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800",
+      "tag": "receiving",
+      "coordinates": {
+        "x": 68,
+        "y": 42
+      },
+      "lat": 16.0618,
+      "lng": 108.2351,
+      "districts": "Sơn Trà",
+      "scale": "Dự án phát triển bởi DMC-579 bao gồm khu sinh hoạt cộng đồng, bãi đỗ xe và hệ thống an ninh khép kín.",
+      "types": "Căn hộ chuẩn nhà ở xã hội từ 45m² đến 65m²",
+      "deadline": "Đang mở bán đợt bổ sung",
+      "hotline": "0905 579 579",
+      "requirements": [
+        "Người thu nhập thấp sinh sống tại địa bàn đô thị Đà Nẵng"
+      ]
+    },
+    {
+      "id": "an-trung-2",
+      "name": "An Trung 2",
+      "location": "An Trung 1, Quận Sơn Trà, Đà Nẵng",
+      "investor": "DMC-579",
+      "status": "Mở bán",
+      "price": "~18.5tr/m²",
+      "priceRaw": 18500000,
+      "progress": 90,
       "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuClHteteBIbuLZyM10AFJQ6Vm9yEguYn8Qs7clGFwM6zDxRP-74dGICejZqhjdCbHvRFksQ7ZphNCcoxaXJ9P5qUF5VroQL07ZCZtV7HuqWONejByAwAjX9AvX4xaa9HvIVYG20hOYS1i2jovOGFTeL0tBLDsijo14Nms_e0DzJQ-QhXLPy7k1ShHaz-chG18MXjpzfhxNAlA31LSzYF7OeSDG7T_31W67WWmMacR1OCZSSoGYCdEqnk1eXboXQjfmf82lLGsueeA",
       "tag": "receiving",
-      "coordinates": { "x": 35, "y": 42 },
-      "lat": 16.07185,
-      "lng": 108.14777,
-      "districts": "Phường Hòa Khánh Bắc",
-      "scale": "8 block chung cư cao từ 12-15 tầng với gần 2,000 căn hộ",
-      "types": "Căn hộ 1-2 phòng ngủ, diện tích từ 32m² đến 66m²",
-      "deadline": "Dự kiến bàn giao tháp tiếp theo vào Quý IV/2026",
-      "hotline": "(0236) 3789 123",
+      "coordinates": {
+        "x": 65,
+        "y": 48
+      },
+      "lat": 16.0549,
+      "lng": 108.2316,
+      "districts": "Sơn Trà",
+      "scale": "Gồm 957 căn hộ (hiện mở bán 633 căn), thu hút hơn 4,000 hồ sơ nộp đăng ký xét tuyển.",
+      "types": "Diện tích căn hộ tiện nghi từ 48m² đến 68m² trang bị thang máy",
+      "deadline": "Bàn giao căn hộ đợt cuối năm 2026",
+      "hotline": "0905 579 111",
       "requirements": [
-        "Chưa sở hữu đất đai hoặc nhà ở tại Đà Nẵng",
-        "Thu nhập không đóng thuế thu nhập cá nhân thường xuyên",
-        "Có đăng ký thường trú hoặc tạm trú trên 1 năm kèm tham gia BHXH tại Đà Nẵng"
+        "Chưa có nhà ở, có đóng bảo hiểm xã hội tại Đà Nẵng ít nhất 1 năm"
       ]
     },
     {
-      "id": "bau-tram",
-      "name": "The Ori Garden (Bàu Tràm)",
-      "location": "Khu đô thị xanh Bàu Tràm Lakeside, Phường Hòa Hiệp Nam, Đà Nẵng",
-      "investor": "Công ty Cổ phần Đầu tư Sài Gòn - Đà Nẵng (SDI)",
-      "status": "Sắp mở bán",
+      "id": "bau-tram-lakeside",
+      "name": "Bàu Tràm Lakeside",
+      "location": "Khu đô thị xanh Bàu Tràm Lakeside, Phường Hòa Hiệp Nam, Quận Liên Chiểu, Đà Nẵng",
+      "investor": "SDI",
+      "status": "Đã đưa vào sử dụng",
       "price": "~12.5tr/m²",
       "priceRaw": 12500000,
-      "progress": 40,
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD7YJE3WIsO4fvd_AO7OmBTPkI-ZDWdiubJExkNJLnMq8VtNgUSoYxibQ5zVCTwfUs04KXiqd2_cbzbTdFeGFk4gLn2_AEc38-uBavo7ou3TT-qySuBE-1NU4kYvxRIYOxfPWAWjZYOl3P5AE-0H6mkQw9ardc8CyQF8OxjGV2tKx8OLe59A4-jri_C2yJPvLBRb7d7-mNOHdFilb8vvxmHE3usclVcwD9RmH4pqHbx1QEekC4cnd0bDh5ydfv9uaiy9H6rfPV_th8",
-      "tag": "coming_soon",
-      "coordinates": { "x": 30, "y": 48 },
-      "lat": 16.08889,
-      "lng": 108.14300,
-      "districts": "Phường Hòa Hiệp Nam",
-      "scale": "Hơn 3,000 căn hộ chất lượng cao phong cách Nhật Bản với hệ sinh thái khép kín",
-      "types": "Căn hộ từ 35.3m² đến 70m² (Studio, 1 PN + 1, 2 PN, 3 PN)",
-      "deadline": "Dự kiến mở bán giai đoạn 2 vào tháng 8/2026",
-      "hotline": "(0236) 3999 888",
-      "requirements": [
-        "Chưa từng đứng tên sở hữu đất nền hay nhà ở tại địa bàn TP. Đà Nẵng",
-        "Là công nhân, viên chức, cán bộ hoặc người lao động tự do có thu nhập thấp dưới quy định",
-        "Thủ tục đăng ký xét duyệt và tính điểm ưu tiên thông qua Sở Xây dựng Đà Nẵng"
-      ]
-    },
-    {
-      "id": "nai-hien-dong",
-      "name": "Chung cư thu nhập thấp Nại Hiên Đông",
-      "location": "Phường Nại Hiên Đông, Đà Nẵng",
-      "investor": "Công ty Cổ phần Đầu tư và Phát triển Nhà Đà Nẵng",
-      "status": "Đã bàn giao",
-      "price": "Đã hết quỹ",
-      "priceRaw": 8500000,
       "progress": 100,
-      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuASYE2FhNKpl8F_zuy1X8hjyLCbWY66kSKmP4q5ONDxLl9Y-NBt3D7omVwbuoxIhw7JxLEfR5oy9B7bm6c2JwS5FhWZr4DdQ334SJDw6Nd6wb_n0vv8owtIAdxmdQ4xtGO85QLmczzYV2k6IG6MXtHVEy_x3HQXI81W3mjQt52ym6uuWx2jMA2Ynz_aDLTxX73IVMTWPGZrFAw3GTTf5kyy2-OeDESxVFC1oBEPk779WUB38z6niHZOOCM9b-fvzjz6B8aIys3Vo5k",
+      "image": "https://lh3.googleusercontent.com/aida-public/AB6AXuD7YJE3WIsO4fvd_AO7OmBTPkI-ZDWdiubJExkNJLnMq8VtNgUSoYxibQ5zVCTwfUs04KXiqd2_cbzbTdFeGFk4gLn2_AEc38-uBavo7ou3TT-qySuBE-1NU4kYvxRIYOxfPWAWjZYOl3P5AE-0H6mkQw9ardc8CyQF8OxjGV2tKx8OLe59A4-jri_C2yJPvLBRb7d7-mNOHdFilb8vvxmHE3usclVcwD9RmH4pqHbx1QEekC4cnd0bDh5ydfv9uaiy9H6rfPV_th8",
       "tag": "completed",
-      "coordinates": { "x": 65, "y": 32 },
-      "lat": 16.09631,
-      "lng": 108.23277,
-      "districts": "Phường Nại Hiên Đông",
-      "scale": "5 block chung cư cao từ 7-12 tầng phục vụ người có thu nhập thấp tại Phường Nại Hiên Đông",
-      "types": "Diện tích căn hộ trung bình từ 45m² đến 60m² rộng rãi",
-      "deadline": "Đã hoàn thành bàn giao và đi vào vận hành ổn định lâu dài",
-      "hotline": "(0236) 3111 222",
+      "coordinates": {
+        "x": 30,
+        "y": 45
+      },
+      "lat": 16.0917,
+      "lng": 108.1419,
+      "districts": "Liên Chiểu",
+      "scale": "Giai đoạn đã đưa vào sử dụng ổn định đồng bộ với công viên rộng lớn, siêu thị và an ninh tuyệt đối 24/7.",
+      "types": "Các căn loại hình từ 35m² đến 70m²",
+      "deadline": "Cư dân đã định cư và sinh hoạt ổn định",
+      "hotline": "0905 888 999",
       "requirements": [
-        "Chính sách ưu tiên cho hộ nghèo giải tỏa tái định cư tại Phường Nại Hiên Đông",
-        "Người dân thuộc diện chính sách được phê duyệt đặc biệt của thành phố",
-        "Hiện được vận hành ổn định bởi Ban quản lý Nhà chung cư Đà Nẵng"
-      ]
-    },
-    {
-      "id": "an-phu-dong",
-      "name": "NOXH An Phú Đông",
-      "location": "Phường Hòa Thọ Đông, Đà Nẵng",
-      "investor": "Sở Xây dựng Đà Nẵng phối hợp Liên minh HTX",
-      "status": "Sắp mở bán",
-      "price": "~11.8tr/m²",
-      "priceRaw": 11800000,
-      "progress": 15,
-      "image": "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-      "tag": "coming_soon",
-      "coordinates": { "x": 45, "y": 70 },
-      "lat": 16.01429,
-      "lng": 108.19634,
-      "districts": "Phường Hòa Thọ Đông",
-      "scale": "Dự án gồm 2 tòa tháp hiện đại cao 15 tầng với khuôn viên xanh mát, bãi đỗ xe rộng rãi",
-      "types": "Diện tích từ 40m² đến 65m² (1-2 phòng ngủ, tối ưu ánh sáng tự nhiên)",
-      "deadline": "Dự kiến bàn giao vào Quý I/2028, nhận hồ sơ thẩm định trước tháng 12/2026",
-      "hotline": "(0236) 3888 777",
-      "requirements": [
-        "Ưu tiên công chức, viên chức trẻ làm việc tại trung tâm hành chính công",
-        "Hộ gia đình có hoàn cảnh khó khăn chưa sở hữu đất và tài sản gắn liền với đất tại TP. Đà Nẵng",
-        "Nộp đơn đăng ký kèm giấy xác nhận nhà ở thông qua tổ dân phố và Phường Hòa Thọ Đông"
-      ]
-    },
-    {
-      "id": "nam-cau-tuyen-son",
-      "name": "Chung cư Xã hội Nam Cầu Tuyên Sơn",
-      "location": "Khu đô thị Nam Cầu Tuyên Sơn, Phường Khuê Mỹ, Đà Nẵng",
-      "investor": "Tập đoàn Đầu tư Đất Xanh Miền Trung và thành phố",
-      "status": "Đang nhận hồ sơ",
-      "price": "~14.2tr/m²",
-      "priceRaw": 14200000,
-      "progress": 90,
-      "image": "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
-      "tag": "receiving",
-      "coordinates": { "x": 72, "y": 55 },
-      "lat": 16.02708,
-      "lng": 108.23594,
-      "districts": "Phường Khuê Mỹ",
-      "scale": "Thiết kế thông minh lồng ghép khu thương mại nhỏ, công viên và nhà cộng đồng",
-      "types": "Căn hộ 2 phòng ngủ diện tích đa dạng từ 48m² - 68m²",
-      "deadline": "Bàn giao căn hộ đầu tiên vào tháng 10/2026, đợt nhận hồ sơ cuối kết thúc ngày 30/08/2026",
-      "hotline": "(0236) 3555 444",
-      "requirements": [
-        "Người lao động cư trú tại Phường Khuê Mỹ hoặc lân cận",
-        "Có đóng bảo hiểm xã hội tại TP. Đà Nẵng tối thiểu 12 tháng liên tục",
-        "Bảo đảm điều kiện thu nhập không thuộc đối tượng nộp thuế TNCN đóng tại địa phương"
-      ]
-    },
-    {
-      "id": "lien-chieu-eco",
-      "name": "Nhà ở xã hội Eco Home",
-      "location": "Phường Hòa Khánh Bắc, Đà Nẵng",
-      "investor": "Tập đoàn đầu tư Địa ốc Eco Việt Nam",
-      "status": "Sắp mở bán",
-      "price": "~10.5tr/m²",
-      "priceRaw": 10500000,
-      "progress": 25,
-      "image": "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&q=80&w=800",
-      "tag": "coming_soon",
-      "coordinates": { "x": 25, "y": 35 },
-      "lat": 16.07542,
-      "lng": 108.13689,
-      "districts": "Phường Hòa Khánh Bắc",
-      "scale": "Khu chung cư phức hợp gồm 3 block căn hộ tiện nghi với hồ bơi và khu vui chơi ngoài trời cho bé",
-      "types": "Diện tích linh hoạt từ 45m² đến 62m² tinh tế, chuẩn xanh",
-      "deadline": "Dự kiến bàn giao tháp A vào Quý II/2027",
-      "hotline": "(0236) 3666 999",
-      "requirements": [
-        "Người dân chưa sở hữu nhà tại địa bàn thành phố",
-        "Có thu nhập thực tế trung bình dưới 11 triệu đồng/tháng của cá nhân đăng ký",
-        "Xem xét các điểm ưu tiên như đóng góp xã hội, gia đình chính sách hoặc hoàn cảnh đặc biệt"
+        "Công dân đủ điều kiện nhận NOXH đã bốc thăm và chuyển vào ở"
       ]
     }
   ],
@@ -198,9 +181,29 @@
     }
   ],
   "stats": [
-    { "count": "15", "label": "Tổng dự án NOXH", "subDec": "Đang triển khai quy hoạch", "icon": "domain" },
-    { "count": "12.4k", "label": "Tổng số căn hộ", "subDec": "Sản phẩm bàn giao", "icon": "vpn_key" },
-    { "count": "8,540", "label": "Đơn hồ sơ thụ lý", "subDec": "Tiếp nhận trực tiếp", "icon": "drafts" },
-    { "count": "92%", "label": "Tỷ lệ giải quyết", "subDec": "Hoàn thiện duyệt thành công", "icon": "task_alt" }
+    {
+      "count": "15",
+      "label": "Tổng dự án NOXH",
+      "subDec": "Đang triển khai quy hoạch",
+      "icon": "domain"
+    },
+    {
+      "count": "12.4k",
+      "label": "Tổng số căn hộ",
+      "subDec": "Sản phẩm bàn giao",
+      "icon": "vpn_key"
+    },
+    {
+      "count": "8,540",
+      "label": "Đơn hồ sơ thụ lý",
+      "subDec": "Tiếp nhận trực tiếp",
+      "icon": "drafts"
+    },
+    {
+      "count": "92%",
+      "label": "Tỷ lệ giải quyết",
+      "subDec": "Hoàn thiện duyệt thành công",
+      "icon": "task_alt"
+    }
   ]
 }
