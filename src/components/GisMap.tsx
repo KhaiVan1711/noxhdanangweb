@@ -1,8 +1,33 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Project } from "../types";
-import { MapPin, Search, Building2, Eye, ZoomIn, ZoomOut, Compass } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import {
+  MapPin,
+  Search,
+  Building2,
+  Eye,
+  ZoomIn,
+  ZoomOut,
+  Compass,
+  LocateFixed,
+  Layers3,
+  X,
+  SlidersHorizontal,
+  ChevronDown,
+  Home,
+  TrendingUp,
+  Clock,
+  CheckCircle2,
+} from "lucide-react";
+
+// ─── TYPES ───────────────────────────────────────────────────────────────────
 
 interface GisMapProps {
   projects: Project[];
@@ -11,340 +36,797 @@ interface GisMapProps {
   onViewDetails: (id: string) => void;
 }
 
-export function GisMap({ projects, selectedProject, onSelectProject, onViewDetails }: GisMapProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterTag, setFilterTag] = useState<string>("all");
-  
-  const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-  const markersGroupRef = useRef<L.LayerGroup | null>(null);
+type TileMode = "light" | "dark" | "satellite";
+type TagFilter = "all" | "receiving" | "coming_soon" | "handed_over";
+type SortMode = "default" | "price_asc" | "price_desc" | "name";
 
-  const filteredProjects = projects.filter((p) => {
-    const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          p.location.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesTag = filterTag === "all" || p.tag === filterTag;
-    return matchesSearch && matchesTag;
-  });
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
-  // Initialize Map
+const DANANG_CENTER: [number, number] = [16.0544, 108.2022];
+
+const TILE_CONFIGS: Record<TileMode, { url: string; attribution: string }> = {
+  light: {
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+  },
+  dark: {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "&copy; Esri",
+  },
+};
+
+const TAG_META: Record<
+  string,
+  { label: string; color: string; bg: string; icon: React.ReactNode }
+> = {
+  receiving: {
+    label: "Đang nhận hồ sơ",
+    color: "#059669",
+    bg: "bg-emerald-50 text-emerald-700",
+    icon: <CheckCircle2 className="w-3 h-3" />,
+  },
+  coming_soon: {
+    label: "Sắp mở bán",
+    color: "#2563eb",
+    bg: "bg-blue-50 text-blue-700",
+    icon: <Clock className="w-3 h-3" />,
+  },
+  handed_over: {
+    label: "Đã bàn giao",
+    color: "#d97706",
+    bg: "bg-amber-50 text-amber-700",
+    icon: <Home className="w-3 h-3" />,
+  },
+};
+
+// ─── HOOKS ────────────────────────────────────────────────────────────────────
+
+function useLeafletMap(containerRef: React.RefObject<HTMLDivElement>) {
+  const mapRef = useRef<L.Map | null>(null);
+  const markerLayerRef = useRef<L.LayerGroup | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const userMarkerRef = useRef<L.CircleMarker | null>(null);
+
   useEffect(() => {
-    if (!mapContainerRef.current) return;
+    if (!containerRef.current || mapRef.current) return;
 
-    // Centered at Da Nang City Coordinates
-    const map = L.map(mapContainerRef.current, {
-      center: [16.0544, 108.2022],
+    const map = L.map(containerRef.current, {
+      center: DANANG_CENTER,
       zoom: 12,
       zoomControl: false,
       attributionControl: true,
     });
 
-    // Elegant CartoDB Voyager tile layer (Beautiful, clean light theme matching the app aesthetic - No API Key required)
-    L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+    const cfg = TILE_CONFIGS.light;
+    const tileLayer = L.tileLayer(cfg.url, {
+      attribution: cfg.attribution,
       maxZoom: 20,
     }).addTo(map);
 
-    const markersGroup = L.layerGroup().addTo(map);
+    const markerLayer = L.layerGroup().addTo(map);
 
-    mapInstanceRef.current = map;
-    markersGroupRef.current = markersGroup;
+    mapRef.current = map;
+    markerLayerRef.current = markerLayer;
+    tileLayerRef.current = tileLayer;
 
     return () => {
       map.remove();
-      mapInstanceRef.current = null;
-      markersGroupRef.current = null;
+      mapRef.current = null;
+      markerLayerRef.current = null;
+      tileLayerRef.current = null;
+      userMarkerRef.current = null;
     };
   }, []);
 
-  // Update Markers when project lists or filters change
-  useEffect(() => {
-    const map = mapInstanceRef.current;
-    const markersGroup = markersGroupRef.current;
-    if (!map || !markersGroup) return;
+  return { mapRef, markerLayerRef, tileLayerRef, userMarkerRef };
+}
 
-    markersGroup.clearLayers();
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+
+function buildMarkerHtml(color: string, isSelected: boolean): string {
+  return `
+    <div style="
+      width:${isSelected ? 40 : 34}px;
+      height:${isSelected ? 40 : 34}px;
+      border-radius:50%;
+      background:white;
+      border:3px solid ${color};
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 6px 20px rgba(0,0,0,${isSelected ? 0.35 : 0.2});
+      position:relative;
+      transition:all .25s cubic-bezier(.34,1.56,.64,1);
+    ">
+      ${isSelected ? `
+        <div style="
+          position:absolute;
+          inset:-9px;
+          border-radius:50%;
+          border:2.5px solid ${color};
+          opacity:.35;
+          animation:ping 1.4s ease infinite;
+        "></div>
+      ` : ""}
+      <div style="
+        width:${isSelected ? 13 : 10}px;
+        height:${isSelected ? 13 : 10}px;
+        border-radius:50%;
+        background:${color};
+      "></div>
+    </div>
+  `;
+}
+
+function buildPopupHtml(proj: Project, color: string): string {
+  const meta = TAG_META[proj.tag] ?? TAG_META.handed_over;
+  return `
+    <div style="
+      min-width:240px;
+      font-family:'Be Vietnam Pro',system-ui,sans-serif;
+      padding:4px 2px;
+    ">
+      <div style="
+        font-size:13.5px;
+        font-weight:700;
+        color:#0f172a;
+        margin-bottom:5px;
+        line-height:1.35;
+      ">${proj.name}</div>
+
+      <div style="
+        display:flex;
+        align-items:center;
+        gap:5px;
+        font-size:11.5px;
+        color:#64748b;
+        margin-bottom:12px;
+      ">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/>
+        </svg>
+        ${proj.location}
+      </div>
+
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+      ">
+        <div style="
+          display:inline-flex;
+          align-items:center;
+          gap:5px;
+          font-size:11px;
+          padding:4px 10px;
+          border-radius:999px;
+          background:${color}18;
+          color:${color};
+          font-weight:600;
+        ">${meta.label}</div>
+
+        <div style="
+          font-size:14px;
+          font-weight:800;
+          color:#0f172a;
+          letter-spacing:-0.3px;
+        ">${proj.price}</div>
+      </div>
+    </div>
+  `;
+}
+
+function parsePrice(price: string): number {
+  const n = parseFloat(price.replace(/[^\d.]/g, ""));
+  if (price.toLowerCase().includes("tỷ")) return n * 1_000_000_000;
+  if (price.toLowerCase().includes("triệu")) return n * 1_000_000;
+  return n;
+}
+
+// ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
+
+export function GisMap({
+  projects,
+  selectedProject,
+  onSelectProject,
+  onViewDetails,
+}: GisMapProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterTag, setFilterTag] = useState<TagFilter>("all");
+  const [tileMode, setTileMode] = useState<TileMode>("light");
+  const [sortMode, setSortMode] = useState<SortMode>("default");
+  const [showFilters, setShowFilters] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
+
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const { mapRef, markerLayerRef, tileLayerRef, userMarkerRef } =
+    useLeafletMap(mapContainerRef);
+
+  // ── FILTERED + SORTED PROJECTS ──────────────────────────────────────────────
+
+  const filteredProjects = useMemo(() => {
+    let list = projects.filter((p) => {
+      const q = searchQuery.toLowerCase();
+      const matchSearch =
+        p.name.toLowerCase().includes(q) ||
+        p.location.toLowerCase().includes(q);
+      const matchTag = filterTag === "all" || p.tag === filterTag;
+      return matchSearch && matchTag;
+    });
+
+    switch (sortMode) {
+      case "price_asc":
+        list = [...list].sort(
+          (a, b) => parsePrice(a.price) - parsePrice(b.price)
+        );
+        break;
+      case "price_desc":
+        list = [...list].sort(
+          (a, b) => parsePrice(b.price) - parsePrice(a.price)
+        );
+        break;
+      case "name":
+        list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+        break;
+    }
+
+    return list;
+  }, [projects, searchQuery, filterTag, sortMode]);
+
+  // ── TILE LAYER UPDATE ────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (tileLayerRef.current) map.removeLayer(tileLayerRef.current);
+    const cfg = TILE_CONFIGS[tileMode];
+    tileLayerRef.current = L.tileLayer(cfg.url, {
+      attribution: cfg.attribution,
+      maxZoom: 20,
+    }).addTo(map);
+  }, [tileMode]);
+
+  // ── MARKERS UPDATE ───────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const layer = markerLayerRef.current;
+    if (!map || !layer) return;
+
+    layer.clearLayers();
+    const bounds: L.LatLngExpression[] = [];
 
     filteredProjects.forEach((proj) => {
       if (!proj.lat || !proj.lng) return;
+      bounds.push([proj.lat, proj.lng]);
 
       const isSelected = selectedProject?.id === proj.id;
-      
-      const pinColor = proj.tag === "receiving" ? "#10b981" : // Emerald green
-                       proj.tag === "coming_soon" ? "#2563eb" : // Blue
-                       "#d97706"; // Amber orange
+      const meta = TAG_META[proj.tag] ?? TAG_META.handed_over;
+      const color = meta.color;
 
-      const ringColor = proj.tag === "receiving" ? "bg-emerald-500" :
-                        proj.tag === "coming_soon" ? "bg-blue-500" :
-                        "bg-amber-500";
-
-      // Styled DivIcon with responsive custom styling & hover effects
-      const customPinHtml = `
-        <div class="relative flex items-center justify-center">
-          ${isSelected ? `<div class="absolute -inset-2.5 animate-ping ${ringColor} rounded-full opacity-25"></div>` : ""}
-          <div class="w-8 h-8 rounded-full bg-white border-2 flex items-center justify-center shadow-lg transition-transform duration-200 hover:scale-110" 
-               style="border-color: ${pinColor}; box-shadow: 0 4px 10px rgba(0,0,0,0.15)">
-            <span class="material-symbols-outlined text-[17px] font-bold" style="color: ${pinColor}">location_on</span>
-          </div>
-        </div>
-      `;
-
-      const customIcon = L.divIcon({
-        html: customPinHtml,
-        className: "custom-div-icon",
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32]
+      const icon = L.divIcon({
+        html: buildMarkerHtml(color, isSelected),
+        className: "",
+        iconSize: isSelected ? [40, 40] : [34, 34],
+        iconAnchor: isSelected ? [20, 40] : [17, 34],
       });
 
-      // Bind precise click properties
-      const marker = L.marker([proj.lat, proj.lng], { icon: customIcon })
-        .addTo(markersGroup)
-        .on("click", () => {
-          onSelectProject(proj);
-        });
-
-      // Simple elegant Leaflet tooltip or bound details
-      const popupContent = `
-        <div style="font-family: system-ui, sans-serif; padding: 4px; min-width: 180px;">
-          <h4 style="margin: 0 0 4px 0; font-size: 12px; font-weight: bold; color: #00355f; line-height: 1.3;">${proj.name}</h4>
-          <p style="margin: 0 0 8px 0; font-size: 10px; color: #64748b; font-weight: 500;">${proj.location}</p>
-          <div style="display: flex; justify-between: space-between; align-items: center; justify-content: space-between; font-size: 10px; font-weight: bold; background: #f8fafc; padding: 4px 8px; border-radius: 6px;">
-            <span style="color: ${pinColor}">${proj.status}</span>
-            <span style="color: #0f172a">${proj.price}</span>
-          </div>
-        </div>
-      `;
-
-      marker.bindPopup(popupContent, {
-        closeButton: true,
-        className: "custom-leaflet-popup"
+      const marker = L.marker([proj.lat, proj.lng], { icon });
+      marker.addTo(layer);
+      marker.on("click", () => onSelectProject(proj));
+      marker.bindPopup(buildPopupHtml(proj, color), {
+        className: "gis-popup",
+        maxWidth: 280,
       });
 
-      // If this marker is selected, auto open its popup
-      if (isSelected) {
-        marker.openPopup();
-      }
+      if (isSelected) marker.openPopup();
     });
-  }, [filteredProjects, selectedProject, onSelectProject]);
 
-  // Pan to selected project when selected from parent or sidebar listing
+    if (!selectedProject && bounds.length > 0) {
+      map.fitBounds(bounds as L.LatLngBoundsExpression, { padding: [60, 60] });
+    }
+  }, [filteredProjects, selectedProject]);
+
+  // ── FLY TO SELECTED ──────────────────────────────────────────────────────────
+
   useEffect(() => {
-    const map = mapInstanceRef.current;
-    if (!map || !selectedProject || !selectedProject.lat || !selectedProject.lng) return;
-
-    map.setView([selectedProject.lat, selectedProject.lng], 14, {
-      animate: true,
-      duration: 0.8,
+    const map = mapRef.current;
+    if (!map || !selectedProject?.lat || !selectedProject?.lng) return;
+    map.flyTo([selectedProject.lat, selectedProject.lng], 15, {
+      duration: 1.2,
+      easeLinearity: 0.25,
     });
   }, [selectedProject]);
 
-  const handleZoomIn = () => {
-    mapInstanceRef.current?.zoomIn();
-  };
+  // ── MAP CONTROLS ─────────────────────────────────────────────────────────────
 
-  const handleZoomOut = () => {
-    mapInstanceRef.current?.zoomOut();
-  };
-
-  const handleResetCamera = () => {
-    if (selectedProject && selectedProject.lat && selectedProject.lng) {
-      mapInstanceRef.current?.setView([selectedProject.lat, selectedProject.lng], 14, {
-        animate: true,
-        duration: 0.8
+  const handleZoomIn = useCallback(() => mapRef.current?.zoomIn(), []);
+  const handleZoomOut = useCallback(() => mapRef.current?.zoomOut(), []);
+  const handleReset = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (selectedProject?.lat && selectedProject?.lng) {
+      map.flyTo([selectedProject.lat, selectedProject.lng], 15, {
+        duration: 1,
       });
     } else {
-      mapInstanceRef.current?.setView([16.0544, 108.2022], 12, {
-        animate: true,
-        duration: 0.8
-      });
+      map.flyTo(DANANG_CENTER, 12, { duration: 1 });
     }
-  };
+  }, [selectedProject]);
 
+  const handleLocateUser = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    navigator.geolocation.getCurrentPosition(
+      ({ coords }) => {
+        if (userMarkerRef.current) map.removeLayer(userMarkerRef.current);
+        const m = L.circleMarker([coords.latitude, coords.longitude], {
+          radius: 10,
+          fillColor: "#2563eb",
+          color: "#ffffff",
+          weight: 3,
+          fillOpacity: 1,
+        })
+          .addTo(map)
+          .bindPopup("Vị trí của bạn");
+        userMarkerRef.current = m;
+        map.flyTo([coords.latitude, coords.longitude], 15, { duration: 1.2 });
+      },
+      () => alert("Không thể lấy vị trí GPS.")
+    );
+  }, []);
+
+  // ── STAT COUNTS ──────────────────────────────────────────────────────────────
+
+  const stats = useMemo(() => {
+    const receiving = projects.filter((p) => p.tag === "receiving").length;
+    const coming = projects.filter((p) => p.tag === "coming_soon").length;
+    const handed = projects.filter((p) => p.tag === "handed_over").length;
+    return { receiving, coming, handed, total: projects.length };
+  }, [projects]);
+
+  // ─────────────────────────────────────────────────────────────────────────────
   return (
-    <div className="bg-slate-50 border border-slate-200/80 rounded-3xl overflow-hidden shadow-premium grid grid-cols-1 lg:grid-cols-12 h-[680px]">
-      
-      {/* Search and Project List Sidebar */}
-      <div className="lg:col-span-4 bg-white border-r border-slate-200 flex flex-col h-full overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/50">
-          <h3 className="font-sans font-bold text-slate-800 text-sm flex items-center gap-2 mb-3 select-none">
-            <span className="material-symbols-outlined text-blue-600 text-[20px]">explore</span>
-            ĐỊNH VỊ NOXH GIS ĐÀ NẴNG
-          </h3>
-          
-          <div className="relative mb-3">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
-            <input
-              type="text"
-              placeholder="Tìm dự án trên bản đồ..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 font-sans text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-            />
-          </div>
+    <>
+      {/* LEAFLET POPUP GLOBAL STYLES */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
+        .gis-popup .leaflet-popup-content-wrapper {
+          border-radius: 16px !important;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.15) !important;
+          border: 1px solid #e2e8f0;
+          padding: 0;
+        }
+        .gis-popup .leaflet-popup-content {
+          margin: 16px 18px !important;
+        }
+        .gis-popup .leaflet-popup-tip-container {
+          display: none;
+        }
+        @keyframes ping {
+          0% { transform: scale(1); opacity: .4; }
+          70% { transform: scale(1.5); opacity: 0; }
+          100% { transform: scale(1); opacity: 0; }
+        }
+      `}</style>
 
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hidden select-none">
-            <button
-              onClick={() => setFilterTag("all")}
-              className={`px-3 py-1.5 font-sans text-xs rounded-lg whitespace-nowrap transition-all ${
-                filterTag === "all"
-                  ? "bg-primary-dark text-white shadow-sm font-semibold"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-700"
-              }`}
-            >
-              Tất cả ({projects.length})
-            </button>
-            <button
-              onClick={() => setFilterTag("receiving")}
-              className={`px-3 py-1.5 font-sans text-xs rounded-lg whitespace-nowrap transition-all ${
-                filterTag === "receiving"
-                  ? "bg-emerald-600 text-white shadow-sm font-semibold"
-                  : "bg-emerald-50 hover:bg-emerald-100 text-emerald-800"
-              }`}
-            >
-              Đang nhận hồ sơ
-            </button>
-            <button
-              onClick={() => setFilterTag("coming_soon")}
-              className={`px-3 py-1.5 font-sans text-xs rounded-lg whitespace-nowrap transition-all ${
-                filterTag === "coming_soon"
-                  ? "bg-blue-600 text-white shadow-sm font-semibold"
-                  : "bg-blue-50 hover:bg-blue-100 text-blue-800"
-              }`}
-            >
-              Sắp mở bán
-            </button>
-          </div>
-        </div>
+      <div
+        style={{ fontFamily: "'Be Vietnam Pro', system-ui, sans-serif" }}
+        className="grid grid-cols-1 lg:grid-cols-12 h-[740px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl"
+      >
+        {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
+        <div className="lg:col-span-4 flex flex-col border-r border-slate-100 bg-white overflow-hidden">
 
-        {/* Scrollable listing */}
-        <div className="flex-1 overflow-y-auto divide-y divide-slate-100">
-          {filteredProjects.length === 0 ? (
-            <div className="p-8 text-center text-slate-400 font-sans text-xs">
-              Không tìm thấy dự án phù hợp bản đồ.
-            </div>
-          ) : (
-            filteredProjects.map((proj) => {
-              const isSelected = selectedProject?.id === proj.id;
-              return (
-                <div
-                  key={proj.id}
-                  onClick={() => {
-                    onSelectProject(proj);
-                  }}
-                  className={`p-4 transition-all duration-200 cursor-pointer text-left hover:bg-slate-50 border-l-4 ${
-                    isSelected 
-                      ? "border-blue-600 bg-blue-50/40" 
-                      : "border-transparent"
-                  }`}
-                >
-                  <p className="font-sans font-semibold text-xs text-slate-900 line-clamp-1 mb-1">
-                    {proj.name}
-                  </p>
-                  <p className="font-sans text-[11px] text-slate-500 line-clamp-1 flex items-center gap-1 mb-2">
-                    <MapPin className="h-3 w-3 shrink-0 text-slate-400" />
-                    {proj.location}
-                  </p>
-                  
-                  <div className="flex justify-between items-center text-[10px]">
-                    <span className={`px-2 py-0.5 rounded-full font-medium ${
-                      proj.tag === 'receiving' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
-                      proj.tag === 'coming_soon' ? 'bg-blue-50 text-blue-700 border border-blue-200' :
-                      'bg-slate-100 text-slate-700 border border-slate-300'
-                    }`}>
-                      {proj.status}
-                    </span>
-                    <span className="font-sans font-bold text-primary-dark">
-                      {proj.price}
-                    </span>
+          {/* HEADER */}
+          <div className="px-5 pt-5 pb-4 border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white">
+
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center shadow-md shadow-blue-200">
+                  <Building2 className="w-4.5 h-4.5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-800 text-slate-900 tracking-tight font-extrabold">
+                    GIS NOXH ĐÀ NẴNG
+                  </div>
+                  <div className="text-[11px] text-slate-400 font-medium">
+                    Hệ thống bản đồ nhà ở xã hội
                   </div>
                 </div>
-              );
-            })
+              </div>
+              <div className="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
+                {stats.total} dự án
+              </div>
+            </div>
+
+            {/* STATS ROW */}
+            <div className="grid grid-cols-3 gap-2 mb-4">
+              {[
+                {
+                  label: "Nhận hồ sơ",
+                  value: stats.receiving,
+                  color: "text-emerald-600",
+                  bg: "bg-emerald-50",
+                },
+                {
+                  label: "Sắp mở bán",
+                  value: stats.coming,
+                  color: "text-blue-600",
+                  bg: "bg-blue-50",
+                },
+                {
+                  label: "Bàn giao",
+                  value: stats.handed,
+                  color: "text-amber-600",
+                  bg: "bg-amber-50",
+                },
+              ].map((s) => (
+                <div
+                  key={s.label}
+                  className={`${s.bg} rounded-2xl px-3 py-2.5 text-center`}
+                >
+                  <div className={`text-lg font-extrabold ${s.color}`}>
+                    {s.value}
+                  </div>
+                  <div className="text-[10px] text-slate-500 font-medium leading-tight mt-0.5">
+                    {s.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* SEARCH */}
+            <div className="relative mb-3">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Tìm theo tên, địa điểm..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="
+                  w-full pl-10 pr-10 py-2.5
+                  rounded-2xl border border-slate-200
+                  bg-white text-sm text-slate-700
+                  placeholder:text-slate-400
+                  outline-none
+                  focus:border-blue-400 focus:ring-3 focus:ring-blue-500/10
+                  transition-all
+                "
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+
+            {/* FILTER ROW */}
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5 flex-1 overflow-auto no-scrollbar">
+                {(
+                  [
+                    { key: "all", label: "Tất cả" },
+                    { key: "receiving", label: "Nhận hồ sơ" },
+                    { key: "coming_soon", label: "Sắp mở" },
+                    { key: "handed_over", label: "Bàn giao" },
+                  ] as { key: TagFilter; label: string }[]
+                ).map((f) => (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilterTag(f.key)}
+                    className={`
+                      px-3 py-1.5 rounded-xl text-[11px] font-semibold whitespace-nowrap transition-all
+                      ${
+                        filterTag === f.key
+                          ? f.key === "receiving"
+                            ? "bg-emerald-600 text-white shadow-sm"
+                            : f.key === "coming_soon"
+                            ? "bg-blue-600 text-white shadow-sm"
+                            : f.key === "handed_over"
+                            ? "bg-amber-500 text-white shadow-sm"
+                            : "bg-slate-900 text-white shadow-sm"
+                          : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                      }
+                    `}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* SORT DROPDOWN */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowSortMenu((p) => !p)}
+                  className="
+                    flex items-center gap-1.5 px-3 py-1.5
+                    rounded-xl border border-slate-200
+                    text-[11px] font-semibold text-slate-600
+                    hover:bg-slate-50 transition-all
+                  "
+                >
+                  <TrendingUp className="w-3 h-3" />
+                  Sắp xếp
+                  <ChevronDown
+                    className={`w-3 h-3 transition-transform ${showSortMenu ? "rotate-180" : ""}`}
+                  />
+                </button>
+
+                {showSortMenu && (
+                  <div className="absolute right-0 top-full mt-1.5 w-44 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden">
+                    {[
+                      { key: "default", label: "Mặc định" },
+                      { key: "name", label: "Tên A→Z" },
+                      { key: "price_asc", label: "Giá tăng dần" },
+                      { key: "price_desc", label: "Giá giảm dần" },
+                    ].map((s) => (
+                      <button
+                        key={s.key}
+                        onClick={() => {
+                          setSortMode(s.key as SortMode);
+                          setShowSortMenu(false);
+                        }}
+                        className={`
+                          w-full text-left px-4 py-2.5 text-xs font-medium transition-colors
+                          ${
+                            sortMode === s.key
+                              ? "bg-blue-50 text-blue-700"
+                              : "text-slate-700 hover:bg-slate-50"
+                          }
+                        `}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* PROJECT LIST */}
+          <div className="flex-1 overflow-y-auto">
+            {filteredProjects.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full gap-3 text-slate-400">
+                <Search className="w-10 h-10 opacity-30" />
+                <div className="text-sm font-medium">
+                  Không tìm thấy dự án phù hợp
+                </div>
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    setFilterTag("all");
+                  }}
+                  className="text-xs text-blue-600 hover:underline"
+                >
+                  Xóa bộ lọc
+                </button>
+              </div>
+            ) : (
+              filteredProjects.map((proj) => {
+                const isSelected = selectedProject?.id === proj.id;
+                const meta = TAG_META[proj.tag] ?? TAG_META.handed_over;
+
+                return (
+                  <div
+                    key={proj.id}
+                    onClick={() => onSelectProject(proj)}
+                    className={`
+                      px-5 py-3.5
+                      border-b border-slate-100
+                      cursor-pointer
+                      transition-all duration-150
+                      hover:bg-slate-50
+                      ${
+                        isSelected
+                          ? "bg-blue-50 border-l-[3px] border-l-blue-600"
+                          : "border-l-[3px] border-l-transparent"
+                      }
+                    `}
+                  >
+                    <div className="flex gap-3 items-start">
+                      {/* COLOR DOT */}
+                      <div
+                        className="mt-1 w-2 h-2 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: meta.color }}
+                      />
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2 mb-1">
+                          <div className="text-[13px] font-semibold text-slate-900 line-clamp-1 leading-tight">
+                            {proj.name}
+                          </div>
+                          <div className="text-xs font-bold text-blue-700 whitespace-nowrap">
+                            {proj.price}
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-1 text-[11px] text-slate-500 mb-2">
+                          <MapPin className="w-3 h-3 flex-shrink-0" />
+                          <span className="line-clamp-1">{proj.location}</span>
+                        </div>
+
+                        <div
+                          className={`
+                            inline-flex items-center gap-1
+                            px-2 py-0.5 rounded-full
+                            text-[10px] font-semibold
+                            ${meta.bg}
+                          `}
+                        >
+                          {meta.icon}
+                          {meta.label}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* SELECTED PROJECT FOOTER */}
+          {selectedProject && (
+            <div className="p-4 border-t border-slate-200 bg-gradient-to-t from-slate-50 to-white">
+              <div className="flex items-start gap-3 mb-3">
+                <div
+                  className="w-2 h-2 rounded-full mt-1.5 flex-shrink-0"
+                  style={{
+                    backgroundColor:
+                      TAG_META[selectedProject.tag]?.color ?? "#64748b",
+                  }}
+                />
+                <div className="min-w-0">
+                  <div className="text-sm font-bold text-slate-900 line-clamp-1">
+                    {selectedProject.name}
+                  </div>
+                  <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">
+                    {selectedProject.location}
+                  </div>
+                  <div className="text-sm font-extrabold text-blue-700 mt-1">
+                    {selectedProject.price}
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => onViewDetails(selectedProject.id)}
+                className="
+                  w-full h-10 rounded-2xl
+                  bg-gradient-to-r from-slate-900 to-slate-800
+                  text-white text-sm font-semibold
+                  hover:opacity-90 active:scale-[.98]
+                  transition-all
+                  flex items-center justify-center gap-2
+                  shadow-lg shadow-slate-900/20
+                "
+              >
+                <Eye className="w-4 h-4" />
+                Xem chi tiết dự án
+              </button>
+            </div>
           )}
         </div>
 
-        {/* Selected Project Box Details Footer */}
-        {selectedProject && (
-          <div className="p-4 bg-slate-50 border-t border-slate-200 text-left">
-            <div className="flex items-start gap-2 mb-2">
-              <Building2 className="h-4 w-4 text-blue-800 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-sans font-bold text-xs text-slate-900 line-clamp-1">
-                  {selectedProject.name}
-                </p>
-                <p className="font-sans text-[11px] text-slate-500 line-clamp-1">
-                  Giá: <span className="font-bold text-blue-700">{selectedProject.price}</span>
-                </p>
+        {/* ── MAP PANEL ────────────────────────────────────────────────────── */}
+        <div className="lg:col-span-8 relative">
+          <div ref={mapContainerRef} className="absolute inset-0 z-0" />
+
+          {/* TILE SWITCHER */}
+          <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-lg rounded-2xl p-2.5">
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <Layers3 className="w-3.5 h-3.5 text-slate-500" />
+              <span className="text-[10px] font-bold text-slate-600 uppercase tracking-wider">
+                Bản đồ
+              </span>
+            </div>
+            <div className="flex gap-1.5">
+              {(["light", "dark", "satellite"] as TileMode[]).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setTileMode(m)}
+                  className={`
+                    px-3 py-1.5 rounded-xl text-[11px] font-semibold capitalize transition-all
+                    ${
+                      tileMode === m
+                        ? "bg-slate-900 text-white shadow-sm"
+                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                    }
+                  `}
+                >
+                  {m === "light" ? "Sáng" : m === "dark" ? "Tối" : "Vệ tinh"}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* MAP CONTROLS */}
+          <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
+            {[
+              {
+                icon: <ZoomIn className="w-4 h-4 text-slate-700" />,
+                onClick: handleZoomIn,
+                className: "bg-white hover:bg-slate-50 border border-slate-200",
+              },
+              {
+                icon: <ZoomOut className="w-4 h-4 text-slate-700" />,
+                onClick: handleZoomOut,
+                className: "bg-white hover:bg-slate-50 border border-slate-200",
+              },
+              {
+                icon: <Compass className="w-4 h-4 text-slate-700" />,
+                onClick: handleReset,
+                className: "bg-white hover:bg-slate-50 border border-slate-200",
+              },
+              {
+                icon: <LocateFixed className="w-4 h-4 text-white" />,
+                onClick: handleLocateUser,
+                className:
+                  "bg-blue-600 hover:bg-blue-700 shadow-lg shadow-blue-200",
+              },
+            ].map((btn, i) => (
+              <button
+                key={i}
+                onClick={btn.onClick}
+                className={`
+                  w-10 h-10 rounded-2xl shadow-md
+                  flex items-center justify-center
+                  transition-all active:scale-95
+                  ${btn.className}
+                `}
+              >
+                {btn.icon}
+              </button>
+            ))}
+          </div>
+
+          {/* LEGEND */}
+          <div className="absolute bottom-4 left-4 z-[1000] bg-white/95 backdrop-blur-xl border border-slate-200 shadow-xl rounded-2xl p-4 min-w-[200px]">
+            <div className="text-[10px] font-bold text-slate-500 mb-3 uppercase tracking-widest">
+              Trạng thái
+            </div>
+            <div className="space-y-2">
+              {Object.entries(TAG_META).map(([key, m]) => (
+                <div key={key} className="flex items-center gap-2.5">
+                  <div
+                    className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: m.color }}
+                  />
+                  <span className="text-[11px] font-medium text-slate-700">
+                    {m.label}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* BRANDING */}
+          <div className="absolute bottom-4 right-4 z-[1000] bg-white/90 backdrop-blur-xl border border-slate-200 shadow-md rounded-2xl px-4 py-2">
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-slate-800">
+              GIS NOXH ĐÀ NẴNG
+            </div>
+            <div className="text-[10px] text-slate-400 mt-0.5">
+              OpenStreetMap · Leaflet
+            </div>
+          </div>
+
+          {/* RESULT COUNT BADGE */}
+          {filteredProjects.length !== projects.length && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 z-[1000]">
+              <div className="bg-slate-900/90 backdrop-blur text-white text-xs font-semibold px-4 py-2 rounded-full shadow-lg">
+                Đang hiển thị {filteredProjects.length} / {projects.length} dự án
               </div>
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => onViewDetails(selectedProject.id)}
-                className="flex-1 py-1.5 bg-primary-dark hover:bg-opacity-95 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-colors cursor-pointer"
-              >
-                <Eye className="h-3.5 w-3.5" /> Chi tiết dự án
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Real Live Leaflet OpenStreetMap Map Area (100% Free - Works Out of the Box for Everyone) */}
-      <div className="lg:col-span-8 relative bg-slate-100 overflow-hidden flex items-center justify-center w-full h-full min-h-[450px] lg:min-h-0">
-        
-        {/* Leaflet map hook container */}
-        <div ref={mapContainerRef} className="absolute inset-0 w-full h-full z-0 select-text" />
-
-        {/* Dynamic Zoom & Control Panel Overlay (Standard custom buttons on the top right) */}
-        <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-1.5 shadow-md">
-          <button
-            onClick={handleZoomIn}
-            className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-800 rounded-xl flex items-center justify-center transition-all border border-slate-200 active:scale-95 cursor-pointer font-bold"
-            title="Phóng to"
-          >
-            <ZoomIn className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleZoomOut}
-            className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-800 rounded-xl flex items-center justify-center transition-all border border-slate-200 active:scale-95 cursor-pointer font-bold"
-            title="Thu nhỏ"
-          >
-            <ZoomOut className="h-4 w-4" />
-          </button>
-          <button
-            onClick={handleResetCamera}
-            className="w-10 h-10 bg-white hover:bg-slate-50 text-slate-700 rounded-xl flex items-center justify-center transition-all border border-slate-200 active:scale-95 cursor-pointer"
-            title="Định vị trung tâm"
-          >
-            <Compass className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Info Label overlay for 100% Free Leaflet announcement */}
-        <div className="absolute top-4 left-4 z-[1000] bg-white/95 backdrop-blur-md px-3 py-1.5 rounded-xl shadow-md border border-slate-200/50 flex items-center gap-2 select-none">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="font-sans text-[10px] text-slate-700 font-bold uppercase tracking-wider">
-            Bản đồ OpenStreetMap Miễn Phí
-          </span>
-        </div>
-
-        {/* Legend block overlay for quick status identification */}
-        <div className="absolute bottom-4 left-4 z-[1000] bg-white/92 backdrop-blur-md p-3.5 rounded-2xl shadow-lg border border-slate-200 text-left text-[10px] font-sans text-slate-700 space-y-1.5 select-none max-w-[200px]">
-          <div className="font-extrabold text-[#00355f] mb-1 tracking-wider uppercase">TRẠNG THÁI DỰ ÁN</div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#10b981] rounded-full inline-block"></span>
-            <span>Đang nhận hồ sơ đăng ký</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#2563eb] rounded-full inline-block"></span>
-            <span>Sắp sửa mở bán</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 bg-[#d97706] rounded-full inline-block"></span>
-            <span>Đã bàn giao căn hộ</span>
-          </div>
+          )}
         </div>
       </div>
-    </div>
+    </>
   );
 }

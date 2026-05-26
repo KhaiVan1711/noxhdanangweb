@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 export function DocumentRequirements() {
-  const [activeSection, setActiveSection] = useState<"doituong" | "nhao" | "thunhap" | "roadmap" | "wizard">("doituong");
+  const [activeSection, setActiveSection] = useState<"doituong" | "nhao" | "thunhap" | "roadmap" | "wizard" | "loancalc">("loancalc");
 
   // State for Interactive Evaluation Wizard
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3 | 4>(1);
@@ -15,6 +15,36 @@ export function DocumentRequirements() {
   const [houseAreaUnder15, setHouseAreaUnder15] = useState<boolean | null>(null);
   const [maritalStatus, setMaritalStatus] = useState<"single" | "single_kid" | "married" | "">("");
   const [incomeValue, setIncomeValue] = useState<number>(0);
+
+  // States for Loan Calculator
+  const [calcProjectId, setCalcProjectId] = useState<string>("custom");
+  const [calcPriceInput, setCalcPriceInput] = useState<number>(15000000);
+  const [calcAreaInput, setCalcAreaInput] = useState<number>(55);
+  const [calcLoanRatio, setCalcLoanRatio] = useState<number>(70);
+  const [calcLoanTerm, setCalcLoanTerm] = useState<number>(20);
+  const [calcInterestRate, setCalcInterestRate] = useState<number>(4.8);
+  const [calcMethod, setCalcMethod] = useState<"reducing" | "equal">("reducing");
+  const [showSchedule, setShowSchedule] = useState<boolean>(false);
+
+  const calcProjects = [
+    { id: "custom", name: "-- Nhập giá và diện tích thủ công --", price: 15000000, size: 50 },
+    { id: "ecohome-hoa-hiep", name: "Ecohome Hòa Hiệp (Q. Liên Chiểu)", price: 15500000, size: 55 },
+    { id: "viet-huong-lakeside", name: "Việt Hương Lakeside (Phường Hòa Hiệp Nam)", price: 16200000, size: 60 },
+    { id: "dai-dia-bao", name: "Đại Địa Bảo (Quận Sơn Trà)", price: 14800000, size: 52 },
+    { id: "an-trung-2", name: "An Trung 2 (Quận Sơn Trà)", price: 18500000, size: 58 },
+    { id: "bau-tram-lakeside", name: "Bàu Tràm Lakeside (Q. Liên Chiểu)", price: 12500000, size: 45 }
+  ];
+
+  const handleCalcProjectChange = (projId: string) => {
+    setCalcProjectId(projId);
+    if (projId !== "custom") {
+      const p = calcProjects.find((proj) => proj.id === projId);
+      if (p) {
+        setCalcPriceInput(p.price);
+        setCalcAreaInput(p.size);
+      }
+    }
+  };
 
   // Helper calculation for result
   const evaluateQualification = () => {
@@ -115,6 +145,7 @@ export function DocumentRequirements() {
           <div className="space-y-2 select-none">
             {[
               { id: "wizard", label: "Hệ thống tự kiểm tra", sub: "Interactive Self-Check Tool", icon: Calculator, accent: "border-blue-500" },
+              { id: "loancalc", label: "Tính vay & Trả góp", sub: "VBSP Loan Financial Planner", icon: Wallet, accent: "border-sky-500" },
               { id: "doituong", label: "1. Đối tượng ưu đãi", sub: "12 nhóm đối tượng hưởng chính sách", icon: Users, accent: "border-emerald-500" },
               { id: "nhao", label: "2. Điều kiện về Nhà ở", sub: "Hạn mức diện tích & Sở hữu", icon: Home, accent: "border-indigo-500" },
               { id: "thunhap", label: "3. Điều kiện về Thu nhập", sub: "Hạn mức thu nhập mới 2026", icon: Wallet, accent: "border-amber-500" },
@@ -161,6 +192,496 @@ export function DocumentRequirements() {
       {/* Main Upgraded Content View */}
       <div className="lg:col-span-9 p-6 md:p-10 bg-white flex flex-col justify-between overflow-y-auto max-h-[750px]">
         
+        {/* LOAN CALCULATOR: MORTGAGE FINANCIAL PLANNER */}
+        {activeSection === "loancalc" && (() => {
+          // Inner calculations
+          const totalHousePrice = calcPriceInput * calcAreaInput;
+          const loanValue = totalHousePrice * (calcLoanRatio / 100);
+          const downPayment = totalHousePrice - loanValue;
+          const totalMonths = calcLoanTerm * 12;
+          const monthlyInterestRate = (calcInterestRate / 100) / 12;
+
+          let scheduleData: Array<{
+            month: number;
+            principal: number;
+            interest: number;
+            total: number;
+            remaining: number;
+          }> = [];
+
+          let overallInterest = 0;
+          let maxMonthlyPayment = 0;
+          let firstMonthPayment = 0;
+          let lastMonthPayment = 0;
+          let fixedMonthlyPayment = 0;
+
+          if (loanValue > 0) {
+            if (calcMethod === "reducing") {
+              const fixedPrincipal = loanValue / totalMonths;
+              let remainingBalance = loanValue;
+              for (let m = 1; m <= totalMonths; m++) {
+                const estInterest = remainingBalance * monthlyInterestRate;
+                const totalPay = fixedPrincipal + estInterest;
+                remainingBalance = Math.max(0, remainingBalance - fixedPrincipal);
+                
+                overallInterest += estInterest;
+                if (m === 1) firstMonthPayment = totalPay;
+                if (m === totalMonths) lastMonthPayment = totalPay;
+                maxMonthlyPayment = Math.max(maxMonthlyPayment, totalPay);
+
+                scheduleData.push({
+                  month: m,
+                  principal: fixedPrincipal,
+                  interest: estInterest,
+                  total: totalPay,
+                  remaining: remainingBalance
+                });
+              }
+            } else {
+              const r = monthlyInterestRate;
+              const n = totalMonths;
+              let monthlyPayment = 0;
+              if (r === 0) {
+                monthlyPayment = loanValue / n;
+              } else {
+                monthlyPayment = loanValue * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+              }
+              fixedMonthlyPayment = monthlyPayment;
+              maxMonthlyPayment = monthlyPayment;
+              firstMonthPayment = monthlyPayment;
+              lastMonthPayment = monthlyPayment;
+
+              let remainingBalance = loanValue;
+              for (let m = 1; m <= totalMonths; m++) {
+                const estInterest = remainingBalance * r;
+                const estPrincipal = monthlyPayment - estInterest;
+                remainingBalance = Math.max(0, remainingBalance - estPrincipal);
+                overallInterest += estInterest;
+
+                scheduleData.push({
+                  month: m,
+                  principal: estPrincipal,
+                  interest: estInterest,
+                  total: monthlyPayment,
+                  remaining: remainingBalance
+                });
+              }
+            }
+          }
+
+          const totalOutlay = loanValue + overallInterest;
+
+          // Build yearly breakdown for easy view
+          const yearsSummary: Array<{
+            year: number;
+            totalPrincipal: number;
+            totalInterest: number;
+            remaining: number;
+          }> = [];
+
+          for (let y = 1; y <= calcLoanTerm; y++) {
+            const startIndex = (y - 1) * 12;
+            const endIndex = Math.min(y * 12, scheduleData.length);
+            let yrPrincipal = 0;
+            let yrInterest = 0;
+            let yrRemaining = 0;
+            for (let idx = startIndex; idx < endIndex; idx++) {
+              yrPrincipal += scheduleData[idx].principal;
+              yrInterest += scheduleData[idx].interest;
+              yrRemaining = scheduleData[idx].remaining;
+            }
+            yearsSummary.push({
+              year: y,
+              totalPrincipal: yrPrincipal,
+              totalInterest: yrInterest,
+              remaining: yrRemaining
+            });
+          }
+
+          return (
+            <div className="space-y-6 animate-fade-up">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-slate-150 pb-5 flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-50 text-[#00355f] border border-blue-150 rounded-2xl shadow-inner">
+                    <Wallet className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-sans font-black text-slate-905 text-sm md:text-base uppercase tracking-tight text-[#00355f]">
+                      QUY HOẠCH TÀI CHÍNH & TÍNH VAY TRẢ GÓP NOXH
+                    </h4>
+                    <p className="text-[11px] text-slate-500 font-semibold">Ước tính hạn mức tín dụng và số tiền gốc lãi chi trả tự chủ theo chính sách</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-2 bg-slate-100 p-1 rounded-xl border border-slate-205 text-xs">
+                  <button 
+                    onClick={() => setCalcMethod("reducing")}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                      calcMethod === "reducing" ? "bg-[#00355f] text-white shadow-sm" : "text-slate-650 hover:text-black"
+                    }`}
+                  >
+                    Dư nợ giảm dần
+                  </button>
+                  <button 
+                    onClick={() => setCalcMethod("equal")}
+                    className={`px-3 py-1.5 rounded-lg font-bold transition-all cursor-pointer ${
+                      calcMethod === "equal" ? "bg-[#00355f] text-white shadow-sm" : "text-slate-650 hover:text-black"
+                    }`}
+                  >
+                    Trả đều hằng tháng
+                  </button>
+                </div>
+              </div>
+
+              {/* Grid 2 Columns */}
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                {/* Left Column: Inputs */}
+                <div className="lg:col-span-5 space-y-6 bg-slate-50/70 p-5 rounded-2.5xl border border-slate-200">
+                  <h5 className="font-sans font-extrabold text-[10px] uppercase text-[#00355f] tracking-wider bg-blue-50/50 px-3 py-1 rounded-md border border-blue-100 w-fit">
+                    THÔNG SỐ PHƯƠNG ÁN MUA NHÀ
+                  </h5>
+
+                  {/* Program selector */}
+                  <div className="space-y-1.5 text-left">
+                    <label className="text-xs font-bold text-slate-700 block text-left">Dự án lựa chọn khảo sát:</label>
+                    <select
+                      value={calcProjectId}
+                      onChange={(e) => handleCalcProjectChange(e.target.value)}
+                      className="w-full px-3 py-2.5 bg-white border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-blue-500/20 focus:outline-none text-slate-800 font-bold cursor-pointer"
+                    >
+                      {calcProjects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Size price inputs */}
+                  <div className="grid grid-cols-2 gap-4 text-left">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 block">Đơn giá định mức (đ/m²):</label>
+                      <input 
+                        type="number"
+                        min="5000000"
+                        max="50000000"
+                        step="100000"
+                        value={calcPriceInput}
+                        onChange={(e) => setCalcPriceInput(Number(e.target.value))}
+                        disabled={calcProjectId !== "custom"}
+                        className={`w-full px-3 py-2.5 border rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/20 focus:outline-none ${
+                          calcProjectId !== "custom" ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200" : "bg-white text-slate-800"
+                        }`}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 block">Diện tích căn hộ (m²):</label>
+                      <input 
+                        type="number"
+                        min="25"
+                        max="120"
+                        value={calcAreaInput}
+                        onChange={(e) => setCalcAreaInput(Number(e.target.value))}
+                        disabled={calcProjectId !== "custom"}
+                        className={`w-full px-3 py-2.5 border rounded-xl text-xs font-bold focus:ring-2 focus:ring-blue-500/20 focus:outline-none ${
+                          calcProjectId !== "custom" ? "bg-slate-100 text-slate-500 cursor-not-allowed border-slate-200" : "bg-white text-slate-800"
+                        }`}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Loan Ratio Slider */}
+                  <div className="space-y-2 text-left">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700">Tỷ lệ vay vốn ngân hàng:</span>
+                      <span className="font-extrabold text-blue-800 px-2.5 py-0.5 bg-blue-55/10 border border-blue-200 rounded-lg">{calcLoanRatio}%</span>
+                    </div>
+                    <input 
+                      type="range"
+                      min="10"
+                      max="80"
+                      step="5"
+                      value={calcLoanRatio}
+                      onChange={(e) => setCalcLoanRatio(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#00355f]"
+                    />
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {[50, 70, 80].map((rv) => (
+                        <button
+                          key={rv}
+                          onClick={() => setCalcLoanRatio(rv)}
+                          className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                            calcLoanRatio === rv 
+                              ? "bg-[#00355f] text-white border-[#00355f]" 
+                              : "bg-white text-slate-650 hover:bg-slate-100 border-slate-200"
+                          }`}
+                        >
+                          {rv}% {rv === 80 ? "(Tối Đa VBSP)" : ""}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Loan Term Slider */}
+                  <div className="space-y-2 text-left">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700">Thời hạn hỗ trợ vay:</span>
+                      <span className="font-extrabold text-blue-800 px-2.5 py-0.5 bg-blue-55/10 border border-blue-200 rounded-lg">{calcLoanTerm} năm ({totalMonths} tháng)</span>
+                    </div>
+                    <input 
+                      type="range"
+                      min="5"
+                      max="25"
+                      value={calcLoanTerm}
+                      onChange={(e) => setCalcLoanTerm(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#00355f]"
+                    />
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {[10, 15, 20, 25].map((yv) => (
+                        <button
+                          key={yv}
+                          onClick={() => setCalcLoanTerm(yv)}
+                          className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                            calcLoanTerm === yv 
+                              ? "bg-[#00355f] text-white border-[#00355f]" 
+                              : "bg-white text-slate-650 hover:bg-slate-100 border-slate-200"
+                          }`}
+                        >
+                          {yv} năm {yv === 25 ? "(Tối Đa)" : ""}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Interest rate Slider */}
+                  <div className="space-y-2 text-left">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="font-bold text-slate-700">Lãi suất tín dụng ưu đãi:</span>
+                      <span className="font-extrabold text-emerald-800 px-2.5 py-0.5 bg-emerald-50 border border-emerald-200 rounded-lg">{calcInterestRate}% / năm</span>
+                    </div>
+                    <input 
+                      type="range"
+                      min="1.0"
+                      max="12.0"
+                      step="0.1"
+                      value={calcInterestRate}
+                      onChange={(e) => setCalcInterestRate(Number(e.target.value))}
+                      className="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                    />
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      <button
+                        onClick={() => setCalcInterestRate(4.8)}
+                        className={`px-2.5 py-1 text-[10px] font-extrabold rounded-lg border transition-all flex items-center gap-1 cursor-pointer ${
+                          calcInterestRate === 4.8
+                            ? "bg-emerald-600 text-white border-emerald-600"
+                            : "bg-white text-emerald-700 hover:bg-emerald-50 border-emerald-255"
+                        }`}
+                      >
+                        🔥 Gói VBSP NOXH (4.8%)
+                      </button>
+                      <button
+                        onClick={() => setCalcInterestRate(8.2)}
+                        className={`px-2.5 py-1 text-[10px] font-bold rounded-lg border transition-all cursor-pointer ${
+                          calcInterestRate === 8.2
+                            ? "bg-slate-800 text-white border-slate-800"
+                            : "bg-white text-slate-600 hover:bg-slate-100 border-slate-250"
+                        }`}
+                      >
+                        Thương mại dự tính (8.2%)
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Info notice box */}
+                  <div className="p-3.5 bg-blue-50/50 border border-blue-150 rounded-xl flex gap-2.5 items-start text-[10px] text-slate-650 leading-normal font-semibold text-left">
+                    <Info className="h-4.5 w-4.5 text-[#00355f] shrink-0 mt-0.5" />
+                    <span>Hệ thống áp dụng tính toán theo lãi suất VBSP chính thống và biểu kế hoạch gốc giảm dần. Giảm áp lực số nợ thâm lũy tiến qua các năm cho chủ hộ gia đình.</span>
+                  </div>
+
+                </div>
+
+                {/* Right Column: Calculations Report */}
+                <div className="lg:col-span-7 space-y-6 text-left">
+                  
+                  {/* Cards Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    
+                    <div className="bg-slate-50 border border-slate-150 p-4.5 rounded-2xl">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">TỔNG TRỊ GIÁ CĂN HỘ</span>
+                      <p className="font-sans font-black text-slate-900 text-sm md:text-base mt-0.5">{formatCurrency(totalHousePrice)}</p>
+                      <span className="text-[10px] text-slate-500 font-medium block mt-1">Dựa trên định mức giá {formatCurrency(calcPriceInput)}</span>
+                    </div>
+
+                    <div className="bg-blue-50/20 border border-blue-150 p-4.5 rounded-2xl">
+                      <span className="text-[9px] uppercase font-bold text-[#00355f] block tracking-wider">SỐ TIỀN THỰC CÓ (VỐN ĐỐI ỨNG)</span>
+                      <p className="font-sans font-black text-blue-900 text-sm md:text-base mt-0.5">{formatCurrency(downPayment)}</p>
+                      <span className="text-[10px] text-slate-500 font-medium block mt-1">Chiếm {100 - calcLoanRatio}% tổng giá trị để đối ức ký HĐMB</span>
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-150 p-4.5 rounded-2xl">
+                      <span className="text-[9px] uppercase font-bold text-slate-400 block tracking-wider">HẠN MỨC GỐC ĐẦU TƯ VAY</span>
+                      <p className="font-sans font-black text-slate-900 text-sm md:text-base mt-0.5">{formatCurrency(loanValue)}</p>
+                      <span className="text-[10px] text-[#00355f] font-bold block mt-1">Bảo trợ tối đa {calcLoanRatio}% gốc từ quỹ an sinh an tâm</span>
+                    </div>
+
+                    <div className="bg-emerald-50 border border-emerald-200 p-4.5 rounded-2xl">
+                      <span className="text-[9px] uppercase font-bold text-emerald-800 block tracking-wider">TỔNG LÃI TÍCH LŨY SẼ TRẢ</span>
+                      <p className="font-sans font-black text-emerald-700 text-sm md:text-base mt-0.5">{formatCurrency(overallInterest)}</p>
+                      <span className="text-[10px] text-emerald-950 font-semibold block mt-1">Giảm thiểu tối đa nhờ lãi suất cố định ưu đãi</span>
+                    </div>
+
+                  </div>
+
+                  {/* Highlights Monthly Banner indicator */}
+                  <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="space-y-1 textarea-left text-center md:text-left">
+                      <span className="text-[9.5px] text-[#00daf3] uppercase font-bold tracking-widest block">KHẢO SÁT KỲ TRẢ GÓP THÁNG ĐẦU</span>
+                      <h4 className="text-xl md:text-2xl font-black font-sans leading-none mt-1">
+                        {calcMethod === "reducing" ? (
+                          <>
+                            {formatCurrency(firstMonthPayment)} <span className="text-xs font-semibold text-slate-400">/ tháng đầu</span>
+                          </>
+                        ) : (
+                          <>
+                            {formatCurrency(fixedMonthlyPayment)} <span className="text-xs font-semibold text-slate-400">/ mỗi tháng</span>
+                          </>
+                        )}
+                      </h4>
+                      <p className="text-[11px] text-slate-400 leading-relaxed font-semibold max-w-sm mt-1">
+                        {calcMethod === "reducing" 
+                          ? `Gốc cố định gốc trả ${formatCurrency(loanValue / totalMonths)}/tháng. Lãi tính giảm dần từng kỳ (Tháng cuối cùng chỉ thanh toán ${formatCurrency(lastMonthPayment)}).`
+                          : `Phương án thanh toán gộp chia đều hằng tháng suốt lịch hạn vay, an tâm cố định số dự chi.`
+                        }
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col items-center justify-center text-center w-full md:w-auto">
+                      <span className="text-[9px] uppercase tracking-wider text-slate-350 font-bold block">Tổng gốc + lãi cuối kỳ</span>
+                      <span className="text-sm font-black text-[#00daf3] mt-0.5">{formatCurrency(totalOutlay)}</span>
+                      <span className="text-[8px] text-slate-400 mt-0.5">Thời hạn {calcLoanTerm} năm</span>
+                    </div>
+                  </div>
+
+                  {/* SVG Chart showing Decreasing Loan Balance */}
+                  <div className="bg-white border border-slate-200 p-5 rounded-2.5xl space-y-4 shadow-sm text-left">
+                    <div className="flex justify-between items-center flex-wrap gap-2">
+                      <h6 className="font-sans font-bold text-xs uppercase text-slate-700 tracking-wider">
+                        TIẾN TRÌNH LUỸ KẾ TRẢ NỢ VÀ GIẢM GỐC ({calcLoanTerm} Năm)
+                      </h6>
+                      <div className="flex items-center gap-3 text-[10px] font-bold text-slate-400">
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-blue-900 rounded-md"></span> Dư nợ còn lại</span>
+                        <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 bg-emerald-600 rounded-md"></span> Đã tất toán</span>
+                      </div>
+                    </div>
+
+                    {/* SVG Render */}
+                    <div className="relative w-full h-32 border-b border-l border-slate-200/80 pt-4 flex items-end">
+                      <svg className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                        {/* Draw the area chart for outstanding balance */}
+                        {(() => {
+                          const points = yearsSummary.map((d, index) => {
+                            const xRatio = index / (yearsSummary.length - 1);
+                            const yRatio = d.remaining / loanValue;
+                            return `${xRatio * 100}%,${(1 - yRatio) * 100}%`;
+                          }).join(" ");
+                          
+                          const fillPoints = `0%,100% ` + points + ` 100%,100%`;
+
+                          return (
+                            <>
+                              {/* Area fill */}
+                              <path
+                                fill="#00355f"
+                                fillOpacity="0.06"
+                                d={`M 0 128 ` + yearsSummary.map((d, index) => {
+                                  const x = (index / (yearsSummary.length - 1)) * 500;
+                                  const y = 128 - (d.remaining / loanValue) * 128;
+                                  return `L ${x} ${y}`;
+                                }).join(" ") + ` L 500 128 Z`}
+                                className="w-full h-full"
+                                style={{ transform: "scale(1, 1)" }}
+                              />
+                              {/* Stroke line */}
+                              <path
+                                fill="none"
+                                stroke="#00355f"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                d={yearsSummary.map((d, index) => {
+                                  const x = (index / (yearsSummary.length - 1)) * 500;
+                                  const y = 128 - (d.remaining / loanValue) * 128;
+                                  return `${index === 0 ? "M" : "L"} ${x} ${y}`;
+                                }).join(" ")}
+                                className="w-full h-full"
+                              />
+                            </>
+                          );
+                        })()}
+                      </svg>
+
+                      {/* Y-axis tags */}
+                      <div className="absolute top-1 left-2.5 text-[9px] font-bold font-mono text-slate-400 bg-white/80 px-1 rounded">
+                        Đầu kỳ: {formatCurrency(loanValue)}
+                      </div>
+                      <div className="absolute bottom-1 right-2.5 text-[9px] font-bold font-mono text-slate-400 bg-white/80 px-1 rounded">
+                        Năm thứ {calcLoanTerm}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* Detailed schedule list table toggling */}
+              <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-xs text-left">
+                <div className="flex justify-between items-center flex-wrap gap-4">
+                  <div className="space-y-0.5">
+                    <h5 className="font-sans font-bold text-xs uppercase tracking-wider text-slate-800">
+                      BẢNG DỰ TOÁN THANH TOÁN CHI TIẾT THEO CÁC NĂM
+                    </h5>
+                    <p className="text-[10px] text-slate-500 font-semibold">Cơ chế khấu trừ dư nợ chi tiết minh bạch giúp chủ hộ hoàn thành đúng tiến độ đóng của VBSP</p>
+                  </div>
+                  <button
+                    onClick={() => setShowSchedule(!showSchedule)}
+                    className="px-4.5 py-2.5 bg-[#00355f] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-opacity-95 transition-all text-center cursor-pointer"
+                  >
+                    {showSchedule ? "Thu gọn bảng dự toán" : "Xem chi tiết bảng trả hàng năm"}
+                  </button>
+                </div>
+
+                {showSchedule && (
+                  <div className="overflow-x-auto border border-slate-205 rounded-2xl animate-fade-down max-h-[350px] overflow-y-auto scrollbar-thin">
+                    <table className="w-full text-xs font-semibold text-slate-700 min-w-[550px]">
+                      <thead className="bg-slate-50 border-b border-slate-200 select-none text-slate-800 text-[10.5px]">
+                        <tr>
+                          <th className="px-4 py-3 text-center">NĂM QUY HOẠCH</th>
+                          <th className="px-4 py-3 text-right">GỐC CỘNG DỒN / NĂM</th>
+                          <th className="px-4 py-3 text-right">LÃI TRẢ TRƯỚC / NĂM</th>
+                          <th className="px-4 py-3 text-right">TỔNG SỐ CHI TRẢ / NĂM</th>
+                          <th className="px-4 py-3 text-right">NỢ GỐC CUỐI NĂM SẼ THU</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y text-[11px] font-bold">
+                        {yearsSummary.map((yr) => (
+                          <tr key={yr.year} className="hover:bg-slate-50/70 transition-colors">
+                            <td className="px-4 py-2.5 text-center font-mono text-[#00355f]">Năm thứ {yr.year}</td>
+                            <td className="px-4 py-2.5 text-right">{formatCurrency(yr.totalPrincipal)}</td>
+                            <td className="px-4 py-2.5 text-right text-emerald-700">{formatCurrency(yr.totalInterest)}</td>
+                            <td className="px-4 py-2.5 text-right text-slate-900">{formatCurrency(yr.totalPrincipal + yr.totalInterest)}</td>
+                            <td className="px-4 py-2.5 text-right text-blue-900 font-mono">{formatCurrency(yr.remaining)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+            </div>
+          );
+        })()}
+
         {/* WIZARD: INTERACTIVE ASSESSMENT TOOL */}
         {activeSection === "wizard" && (
           <div className="space-y-6 animate-fade-up">
