@@ -38,6 +38,7 @@ interface GisMapProps {
   searchKey?: string;
   selectedWard?: string;
   statusFilter?: string;
+  resetTrigger?: number;
 }
 
 type TileMode = "light" | "dark" | "satellite";
@@ -354,6 +355,7 @@ export function GisMap({
   searchKey,
   selectedWard,
   statusFilter,
+  resetTrigger,
 }: GisMapProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<TagFilter>("all");
@@ -532,6 +534,20 @@ export function GisMap({
       easeLinearity: 0.25,
     });
   }, [selectedProject]);
+
+  // ── RESET MAP TO DANANG CITY ─────────────────────────────────────────────────
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    if (resetTrigger && resetTrigger > 0) {
+      map.closePopup();
+      map.flyTo(DANANG_CENTER, 12, {
+        duration: 1.2,
+        easeLinearity: 0.25,
+      });
+    }
+  }, [resetTrigger]);
 
   // ── MAP CONTROLS ─────────────────────────────────────────────────────────────
 

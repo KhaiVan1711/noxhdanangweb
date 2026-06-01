@@ -19,9 +19,12 @@ import {
   Zap,
   RefreshCw,
   Cpu,
-  Sparkles
+  Sparkles,
+  Search
 } from "lucide-react";
 import { Project, WARDS } from "../types";
+import { db } from "../firebase";
+import { doc, deleteDoc } from "firebase/firestore";
 
 interface Article {
   id: string;
@@ -73,6 +76,27 @@ export function AdminPanel() {
   const [tempToken, setTempToken] = useState("");
   const [isTestingN8n, setIsTestingN8n] = useState(false);
   const [copySuccess, setCopySuccess] = useState<string | null>(null);
+
+  // Search & Filter States
+  const [projectSearchQuery, setProjectSearchQuery] = useState("");
+  const [projectStatusFilter, setProjectStatusFilter] = useState("all");
+  const [projectWardFilter, setProjectWardFilter] = useState("all");
+
+  const [newsSearchQuery, setNewsSearchQuery] = useState("");
+  const [newsCategoryFilter, setNewsCategoryFilter] = useState("all");
+
+  // AI-assisted copywriting state
+  const [aiInAction, setAiInAction] = useState<string | null>(null); // e.g. "requirements", "scale"
+  const [aiAssistantPrompt, setAiAssistantPrompt] = useState("");
+  const [aiAssistActiveModel, setAiAssistActiveModel] = useState<"project" | "news">("project");
+
+  // Custom Confirmation Dialog state for safe, non-native deleting
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    id: string;
+    type: "project" | "news";
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadAllData = async () => {
     setLoading(true);
@@ -194,6 +218,63 @@ export function AdminPanel() {
     setTimeout(() => setCopySuccess(null), 2500);
   };
 
+  const handleAIGenerate = async (field: string, targetModel: "project" | "news") => {
+    let promptInput = "";
+    if (targetModel === "project") {
+      if (!editingProject?.name) {
+        alert("Xin vui lòng điền Tên dự án trước để AI có ngữ cảnh sinh nội dung chính xác!");
+        return;
+      }
+      promptInput = `Hãy viết thông tin ${field === "requirements" ? "danh sách Yêu cầu / Điều kiện nộp hồ sơ của người dân" : "qui mô kiến trúc và thiết kế tổng quan"} cho dự án nhà ở xã hội (NOXH) có tên là: "${editingProject.name}". Vị trí tại: ${editingProject.location || "Đà Nẵng"}, Chủ đầu tư: ${editingProject.investor || "Ủy ban"}.`;
+    } else {
+      if (!editingNews?.title) {
+        alert("Xin vui lòng điền Tiêu đề bài viết trước để AI có ngữ cảnh sinh nội dung chính xác!");
+        return;
+      }
+      promptInput = `Hãy viết ${field === "excerpt" ? "đoạn tóm tắt cực ngắn (excerpt)" : "phần thân bài viết chi tiết, hoàn chỉnh với đầy đủ các ý"} cho bài viết tin tức chính thống có tiêu đề sau: "${editingNews.title}". Danh mục: ${editingNews.categoryLabel || "Thông báo"}, Tác giả: ${editingNews.author || "Ban Biên Tập"}.`;
+    }
+
+    setAiInAction(field);
+    try {
+      const res = await fetch("/api/assistant/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          prompt: promptInput,
+          type: targetModel,
+          field: field
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text) {
+          if (targetModel === "project") {
+            if (field === "requirements") {
+              const lines = data.text.split("\n")
+                .map((l: string) => l.replace(/^[-•*]\s*/, "").trim())
+                .filter((l: string) => l.length > 0);
+              setEditingProject(prev => prev ? ({ ...prev, requirements: lines }) : null);
+            } else {
+              setEditingProject(prev => prev ? ({ ...prev, [field]: data.text }) : null);
+            }
+          } else {
+            setEditingNews(prev => prev ? ({ ...prev, [field]: data.text }) : null);
+          }
+          showToast("Trợ lý AI đã sinh nội dung thông minh thành công!");
+        } else {
+          alert("Dữ liệu sinh ra không khả dụng. Vui lòng thử lại!");
+        }
+      } else {
+        alert("Gặp lỗi khi giao tiếp Máy chủ sinh nội dung. Vui lòng xác minh Gemini API Key.");
+      }
+    } catch (err: any) {
+      console.error(err);
+      alert("Mất kết nối máy chủ khi sinh tự động nội dung: " + err.message);
+    } finally {
+      setAiInAction(null);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       loadAllData();
@@ -256,18 +337,17 @@ export function AdminPanel() {
     }
   };
 
-  const handleDeleteProject = async (id: string) => {
-    if (!window.confirm("Bạn có chắc muốn xóa dự án này khỏi hệ thống? Trạng thái bản đồ GIS sẽ cập nhật ngay.")) return;
-    try {
-      const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        showToast("Đã xóa dự án thành công!");
-        loadAllData();
-        window.dispatchEvent(new CustomEvent("refresh-noxh-data"));
-      }
-    } catch (err) {
-      console.error(err);
+  const handleDeleteProject = (id: string) => {
+    if (!id) {
+      alert("Mã ID dự án không hợp lệ hoặc không tồn tại!");
+      return;
     }
+    const proj = projects.find((p) => p.id === id);
+    setDeleteConfirm({
+      id,
+      type: "project",
+      name: proj?.name || "Dự án không tên",
+    });
   };
 
   // News Save / Delete
@@ -293,17 +373,82 @@ export function AdminPanel() {
     }
   };
 
-  const handleDeleteNews = async (id: string) => {
-    if (!window.confirm("Bạn thực sự muốn xóa tin tức này?")) return;
+  const handleDeleteNews = (id: string) => {
+    if (!id) {
+      alert("Mã ID bài viết không hợp lệ hoặc không tồn tại!");
+      return;
+    }
+    const item = news.find((n) => n.id === id);
+    setDeleteConfirm({
+      id,
+      type: "news",
+      name: item?.title || "Bài viết không tiêu đề",
+    });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteConfirm) return;
+    setDeleting(true);
+    const { id, type } = deleteConfirm;
     try {
-      const res = await fetch(`/api/news/${id}`, { method: "DELETE" });
-      if (res.ok) {
+      if (type === "project") {
+        // 1. Try direct client-side Firestore deletion (soft-fail if credentials/rules prevent it on client)
+        try {
+          await deleteDoc(doc(db, "projects", id));
+        } catch (clientErr) {
+          console.warn("Client-side direct deletion soft-failed/skipped. Proceeding to backend server API.", clientErr);
+        }
+        
+        // 2. Call backend DELETE endpoint to synchronize states and ensure deletion
+        const res = await fetch(`/api/projects/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          let errMsg = "Không rõ";
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errData.message || JSON.stringify(errData);
+          } catch (_) {
+            try {
+              errMsg = await res.text();
+            } catch (_) {}
+          }
+          throw new Error(`Máy chủ từ chối xóa dự án (${res.status}): ${errMsg}`);
+        }
+        
+        showToast("Đã xóa dự án thành công!");
+      } else {
+        // 1. Try direct client-side Firestore deletion (soft-fail if credentials/rules prevent it on client)
+        try {
+          await deleteDoc(doc(db, "news", id));
+        } catch (clientErr) {
+          console.warn("Client-side news direct deletion soft-failed. Proceeding to backend server API.", clientErr);
+        }
+
+        // 2. Call backend DELETE endpoint to ensure persistent deletion across all data sources
+        const res = await fetch(`/api/news/${id}`, { method: "DELETE" });
+        if (!res.ok) {
+          let errMsg = "Không rõ";
+          try {
+            const errData = await res.json();
+            errMsg = errData.error || errData.message || JSON.stringify(errData);
+          } catch (_) {
+            try {
+              errMsg = await res.text();
+            } catch (_) {}
+          }
+          throw new Error(`Máy chủ từ chối xóa tin tức (${res.status}): ${errMsg}`);
+        }
+
         showToast("Đã loại bỏ bài viết.");
-        loadAllData();
-        window.dispatchEvent(new CustomEvent("refresh-noxh-data"));
       }
-    } catch (err) {
+
+      setDeleteConfirm(null);
+      loadAllData();
+      window.dispatchEvent(new CustomEvent("refresh-noxh-data"));
+    } catch (err: any) {
       console.error(err);
+      alert(`Đã có lỗi xảy ra khi xóa: ${err?.message || "Không thể kết nối"}`);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -329,6 +474,29 @@ export function AdminPanel() {
       console.error(err);
     }
   };
+
+  const filteredProjects = projects.filter((p) => {
+    const matchesSearch = 
+      (p.name || "").toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+      (p.location || "").toLowerCase().includes(projectSearchQuery.toLowerCase()) ||
+      (p.investor || "").toLowerCase().includes(projectSearchQuery.toLowerCase());
+    
+    const matchesStatus = projectStatusFilter === "all" || p.tag === projectStatusFilter;
+    const matchesWard = projectWardFilter === "all" || p.districts === projectWardFilter;
+    
+    return matchesSearch && matchesStatus && matchesWard;
+  });
+
+  const filteredNews = news.filter((n) => {
+    const matchesSearch = 
+      (n.title || "").toLowerCase().includes(newsSearchQuery.toLowerCase()) ||
+      (n.excerpt || "").toLowerCase().includes(newsSearchQuery.toLowerCase()) ||
+      (n.content || "").toLowerCase().includes(newsSearchQuery.toLowerCase());
+    
+    const matchesCategory = newsCategoryFilter === "all" || n.category === newsCategoryFilter;
+    
+    return matchesSearch && matchesCategory;
+  });
 
   if (!isAuthenticated) {
     return (
@@ -375,7 +543,7 @@ export function AdminPanel() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-up">
+    <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up">
 
       {/* Success Toast Notification */}
       {successToast && (
@@ -478,6 +646,48 @@ export function AdminPanel() {
               </button>
             </div>
 
+            {/* Bộ lọc Tìm kiếm Dự án */}
+            <div className="bg-white border border-slate-150 p-4 rounded-2.5xl shadow-sm grid grid-cols-1 md:grid-cols-3 gap-3">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-405">
+                  <Search className="h-4 w-4" />
+                </span>
+                <input
+                  type="text"
+                  value={projectSearchQuery}
+                  onChange={(e) => setProjectSearchQuery(e.target.value)}
+                  placeholder="Tìm theo tên dự án, chủ đầu tư, đường..."
+                  className="w-full text-xs py-2.5 pl-9 pr-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <select
+                  value={projectStatusFilter}
+                  onChange={(e) => setProjectStatusFilter(e.target.value)}
+                  className="w-full text-xs py-2.5 px-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:outline-none bg-white font-semibold text-slate-600"
+                >
+                  <option value="all">Tất cả Trạng thái hồ sơ</option>
+                  <option value="receiving">Đang nhận hồ sơ</option>
+                  <option value="coming_soon">Sắp mở bán</option>
+                  <option value="completed">Đã bàn giao</option>
+                </select>
+              </div>
+
+              <div>
+                <select
+                  value={projectWardFilter}
+                  onChange={(e) => setProjectWardFilter(e.target.value)}
+                  className="w-full text-xs py-2.5 px-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:outline-none bg-white font-semibold text-slate-600"
+                >
+                  <option value="all">Tất cả Phường/Xã</option>
+                  {WARDS.map((w) => (
+                    <option key={w} value={w}>{w}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
             {/* List Table */}
             <div className="bg-white border border-slate-150 rounded-xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
@@ -494,7 +704,14 @@ export function AdminPanel() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs">
-                    {projects.map((proj) => (
+                    {filteredProjects.length === 0 ? (
+                      <tr>
+                        <td colSpan={7} className="px-6 py-10 text-center text-slate-400 font-medium">
+                          Không tìm thấy dự án nào phù hợp với bộ lọc tìm kiếm.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredProjects.map((proj) => (
                       <tr key={proj.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4.5">
                           <div className="flex items-center gap-3">
@@ -545,7 +762,7 @@ export function AdminPanel() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    )))}
                   </tbody>
                 </table>
               </div>
@@ -576,50 +793,136 @@ export function AdminPanel() {
               </button>
             </div>
 
-            {/* News List */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {news.map((item) => (
-                <div key={item.id} className="bg-white border border-slate-150 rounded-2.5xl p-5 flex flex-col justify-between shadow-sm relative group">
-                  <div className="flex gap-4">
-                    <img src={item.image} alt={item.title} className="h-20 w-20 object-cover rounded-xl border shrink-0" />
-                    <div>
-                      <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-widest leading-none">
-                        {item.categoryLabel}
-                      </span>
-                      <h4 className="font-bold text-slate-900 text-xs md:text-sm mt-1.5 leading-snug line-clamp-2">{item.title}</h4>
-                      <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{item.excerpt}</p>
-                    </div>
-                  </div>
+            {/* Bộ lọc Tìm kiếm Tin tức */}
+            <div className="bg-white border border-slate-150 p-4 rounded-2.5xl shadow-sm grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                  <Search className="h-4 w-4" />
+                </span>
+                <input
+                  type="text"
+                  value={newsSearchQuery}
+                  onChange={(e) => setNewsSearchQuery(e.target.value)}
+                  placeholder="Tìm kiếm tiêu đề, tóm tắt hoặc nội dung chính..."
+                  className="w-full text-xs py-2.5 pl-9 pr-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+                />
+              </div>
 
-                  <div className="pt-4 mt-4 border-t border-slate-100 flex justify-between items-center">
-                    <span className="text-[10px] text-slate-400">Đăng bởi: <b>{item.author}</b> • {item.date}</span>
-                    <div className="flex gap-1">
-                      <button
-                        onClick={() => setEditingNews(item)}
-                        className="p-1.5 bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-700 rounded-lg transition-colors cursor-pointer"
-                        title="Sửa bài viết"
-                      >
-                        <Edit2 className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteNews(item.id)}
-                        className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-700 rounded-lg transition-colors cursor-pointer"
-                        title="Xóa bài viết"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+              <div>
+                <select
+                  value={newsCategoryFilter}
+                  onChange={(e) => setNewsCategoryFilter(e.target.value)}
+                  className="w-full text-xs py-2.5 px-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500/10 focus:outline-none bg-white font-semibold text-slate-600"
+                >
+                  <option value="all">Tất cả danh mục tin tức</option>
+                  <option value="Announcement">Thông báo</option>
+                  <option value="Policy">Phân tích chính sách</option>
+                  <option value="Construction">Tiến độ công trình</option>
+                </select>
+              </div>
+            </div>
+
+            {/* News List */}
+            {filteredNews.length === 0 ? (
+              <div className="bg-white border border-slate-150 rounded-2.5xl p-10 text-center text-slate-400 font-semibold">
+                Không tìm thấy bài viết tin tức nào phù hợp bộ lọc tìm kiếm.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {filteredNews.map((item) => (
+                  <div key={item.id} className="bg-white border border-slate-150 rounded-2.5xl p-5 flex flex-col justify-between shadow-sm relative group">
+                    <div className="flex gap-4">
+                      <img src={item.image} alt={item.title} className="h-20 w-20 object-cover rounded-xl border shrink-0" />
+                      <div>
+                        <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-blue-700 border border-blue-100 uppercase tracking-widest leading-none">
+                          {item.categoryLabel}
+                        </span>
+                        <h4 className="font-bold text-slate-900 text-xs md:text-sm mt-1.5 leading-snug line-clamp-2">{item.title}</h4>
+                        <p className="text-[11px] text-slate-400 mt-1 line-clamp-2">{item.excerpt}</p>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 mt-4 border-t border-slate-100 flex justify-between items-center">
+                      <span className="text-[10px] text-slate-400">Đăng bởi: <b>{item.author}</b> • {item.date}</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setEditingNews(item)}
+                          className="p-1.5 bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-700 rounded-lg transition-colors cursor-pointer"
+                          title="Sửa bài viết"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteNews(item.id)}
+                          className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-700 rounded-lg transition-colors cursor-pointer"
+                          title="Xóa bài viết"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
         {/* TAB 3: STATS REALTIME INDICATORS PANEL */}
         {activeSubTab === "stats" && (
-          <div className="bg-white border border-slate-150 rounded-xl p-6.5 shadow-sm space-y-6">
+          <div className="bg-white border border-slate-150 rounded-xl p-6.5 shadow-sm space-y-6 animate-fade-in">
+            {/* Live Analytics Dashboard Section */}
             <div>
+              <h3 className="font-sans font-black text-slate-850 text-xs md:text-sm uppercase tracking-wider mb-2.5">Báo cáo Phân tích Dữ liệu Hiện tại</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-150 flex items-center gap-3.5">
+                  <div className="w-10 h-10 bg-blue-50 text-blue-700 rounded-xl flex items-center justify-center shrink-0 border border-blue-105">
+                    <Building className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase font-black text-slate-400 tracking-wider">Tổng Dự Án Số Hóa</div>
+                    <div className="text-sm font-black text-slate-800 mt-0.5">{projects.length} tháp NOXH</div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-150 flex items-center gap-3.5">
+                  <div className="w-10 h-10 bg-emerald-50 text-emerald-700 rounded-xl flex items-center justify-center shrink-0 border border-emerald-105">
+                    <Check className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase font-black text-slate-400 tracking-wider">Đang nhận Hồ Sơ</div>
+                    <div className="text-sm font-black text-emerald-800 mt-0.5">{projects.filter(p => p.tag === "receiving").length} dự án</div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-150 flex items-center gap-3.5">
+                  <div className="w-10 h-10 bg-amber-50 text-amber-700 rounded-xl flex items-center justify-center shrink-0 border border-amber-105">
+                    <TrendingUp className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase font-black text-slate-400 tracking-wider">Đơn giá Trung Bình</div>
+                    <div className="text-sm font-black text-slate-800 mt-0.5">
+                      {projects.length > 0
+                        ? (projects.reduce((acc, p) => acc + (p.priceRaw || 15000000), 0) / projects.length / 1000000).toFixed(1)
+                        : "0"}{" "}
+                      tr/m²
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-150 flex items-center gap-3.5">
+                  <div className="w-10 h-10 bg-purple-50 text-purple-700 rounded-xl flex items-center justify-center shrink-0 border border-purple-105">
+                    <Newspaper className="h-4.5 w-4.5" />
+                  </div>
+                  <div>
+                    <div className="text-[9px] uppercase font-black text-slate-400 tracking-wider">Tin tức pháp lý</div>
+                    <div className="text-sm font-black text-slate-800 mt-0.5">{news.length} bài phát hành</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2">
               <h3 className="font-sans font-bold text-slate-800 text-sm md:text-base uppercase">ĐIỀU CHỈNH CHÌA KHÓA BÁO CÁO TRÊN TRANG CHỦ</h3>
               <p className="text-xs text-slate-400 mt-1">Các con số này được liên kết trực tiếp với 4 thẻ tóm tắt năng lực thực tế ở phía dưới trang chủ.</p>
             </div>
@@ -1234,7 +1537,18 @@ export function AdminPanel() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase block mb-1">Quy mô xây dựng</label>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase block">Quy mô xây dựng</label>
+                    <button
+                      type="button"
+                      disabled={aiInAction !== null}
+                      onClick={() => handleAIGenerate("scale", "project")}
+                      className="text-[10px] font-bold text-blue-700 hover:text-blue-800 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                    >
+                      <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                      <span>{aiInAction === "scale" ? "Đang viết..." : "AI gợi ý"}</span>
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={editingProject.scale || ""}
@@ -1274,6 +1588,28 @@ export function AdminPanel() {
                     className="w-full px-3.5 py-2.5 border rounded-xl text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase">Điều kiện / Yêu cầu nộp hồ sơ đặc thù (Mỗi dòng một điều kiện)</label>
+                  <button
+                    type="button"
+                    disabled={aiInAction !== null}
+                    onClick={() => handleAIGenerate("requirements", "project")}
+                    className="text-[10px] font-bold text-blue-700 hover:text-blue-800 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600" />
+                    <span>{aiInAction === "requirements" ? "Đang soạn..." : "AI gợi ý yêu cầu"}</span>
+                  </button>
+                </div>
+                <textarea
+                  rows={4}
+                  value={Array.isArray(editingProject.requirements) ? editingProject.requirements.join("\n") : ""}
+                  onChange={(e) => setEditingProject({ ...editingProject, requirements: e.target.value.split("\n") })}
+                  placeholder="e.g. Chưa đứng tên sở hữu bất động sản tại Đà Nẵng..."
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none"
+                />
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-2.5">
@@ -1379,7 +1715,18 @@ export function AdminPanel() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase block mb-1">Mô tả ngắn gọn (Excerpt) *</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase block">Mô tả ngắn gọn (Excerpt) *</label>
+                  <button
+                    type="button"
+                    disabled={aiInAction !== null}
+                    onClick={() => handleAIGenerate("excerpt", "news")}
+                    className="text-[10px] font-bold text-blue-700 hover:text-blue-800 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    <span>{aiInAction === "excerpt" ? "Đang viết..." : "AI tóm tắt"}</span>
+                  </button>
+                </div>
                 <textarea
                   required
                   rows={2}
@@ -1391,7 +1738,18 @@ export function AdminPanel() {
               </div>
 
               <div>
-                <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase block mb-1">Nội dung chi tiết đẩy đủ *</label>
+                <div className="flex justify-between items-center mb-1">
+                  <label className="text-[10px] font-black text-slate-600 tracking-wider uppercase block">Nội dung chi tiết đầy đủ *</label>
+                  <button
+                    type="button"
+                    disabled={aiInAction !== null}
+                    onClick={() => handleAIGenerate("content", "news")}
+                    className="text-[10px] font-bold text-blue-700 hover:text-blue-800 flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-blue-600 animate-pulse" />
+                    <span>{aiInAction === "content" ? "Đang viết..." : "AI soạn chi tiết"}</span>
+                  </button>
+                </div>
                 <textarea
                   required
                   rows={8}
@@ -1420,6 +1778,62 @@ export function AdminPanel() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* DELETE CONFIRMATION DIALOG MODAL */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 z-[250] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 text-left relative shadow-2xl border border-slate-150 animate-fade-up">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100">
+                <Trash2 className="h-6 w-6" />
+              </div>
+              <div>
+                <h3 className="font-sans font-black text-slate-900 text-sm md:text-base leading-snug">
+                  Xác nhận xóa {deleteConfirm.type === "project" ? "dự án" : "tin tức"}
+                </h3>
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                  Bạn có chắc chắn muốn xóa {deleteConfirm.type === "project" ? "dự án" : "bài viết này"}:
+                </p>
+                <div className="bg-slate-50 border border-slate-150 rounded-xl p-3.5 mt-2.5 text-xs font-semibold text-slate-800 leading-snug">
+                  {deleteConfirm.name}
+                </div>
+                <p className="text-[11px] text-amber-600 font-medium mt-3 flex items-center gap-1">
+                  ⚠️ Hành động này không thể hoàn tác và trạng thái sẽ được cập nhật đồng thời trên hệ thống.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-100 flex justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteConfirm(null)}
+                className="px-4 py-2 border hover:bg-slate-50 text-slate-600 text-xs font-bold rounded-xl cursor-pointer transition-colors disabled:opacity-55"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={handleConfirmDelete}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl flex items-center gap-1.5 cursor-pointer shadow-sm shadow-rose-600/10 transition-all disabled:opacity-55"
+              >
+                {deleting ? (
+                  <>
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    <span>Đang xóa...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span>Đồng ý Xóa</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -105,7 +105,7 @@ export function DocumentRequirements() {
   const sampleDocuments = [
     {
       title: "Mẫu số 01 - Đơn đăng ký mua NOXH",
-      desc: "Bản đơn mẫu chuẩn khai báo các thông tin nhân thân, lý do và đề đạt nguyện vọng xét duyệt mua căn hộ trực thuộc Sở Xây dựng.",
+      desc: "Bản đơn mẫu chuẩn khai báo các thông tin nhân thân, lý do và đề đạt nguyện vọng xét duyệt mua căn hộ trực thuộc Ban quản lý.",
       code: "Đơn 01-NOXH",
       size: "245 KB"
     },
@@ -1258,7 +1258,7 @@ export function DocumentRequirements() {
                 <h4 className="font-sans font-black text-slate-900 text-sm md:text-base uppercase tracking-tight">
                   Quy trình 5 bước nộp & Phê duyệt hồ sơ NOXH Đà Nẵng
                 </h4>
-                <p className="text-xs text-slate-500 font-medium">Quy trình thủ tục hành chính khép kín của Sở Xây dựng để bảo đảm sự minh bạch tối đa</p>
+                <p className="text-xs text-slate-500 font-medium">Quy trình đăng ký và xét duyệt khép kín để bảo đảm sự minh bạch tối đa</p>
               </div>
             </div>
 
@@ -1272,26 +1272,26 @@ export function DocumentRequirements() {
                 },
                 { 
                   step: "TIẾP NHẬN", 
-                  title: "Bước 2: Nộp trực tiếp tại Bộ phận Một cửa Sở Xây dựng", 
+                  title: "Bước 2: Nộp trực tiếp tại Bộ phận Tiếp nhận Một cửa Hành chính", 
                   desc: "Ứng viên mang bộ hồ sơ gốc đã đóng mộc tới Trung tâm hành chính Thành phố (địa chỉ 24 Trần Phú, Q. Hải Châu). Nhân viên quầy dịch vụ hành chính tiếp nhận, cấp mã số biên nhận hồ sơ tra cứu trực tuyến.",
                   color: "bg-blue-800"
                 },
                 { 
                   step: "THẨM ĐỊNH", 
-                  title: "Bước 3: Sở Xây dựng rà soát, đối chiếu loại trừ trùng lặp", 
-                  desc: "Sở Xây dựng chuyển danh sách cho các Văn phòng Đăng ký Đất đai thành phố đối chiếu chéo căn cước công dân xem có đứng tên nhà đất nơi khác không. Loại trừ hồ sơ cố tình lách luật.",
+                  title: "Bước 3: Hội đồng Thẩm định rà soát, đối chiếu loại trừ trùng lặp", 
+                  desc: "Cơ quan Quản lý chuyển danh sách cho các Văn phòng Đăng ký Đất đai thành phố đối chiếu chéo căn cước công dân xem có đứng tên nhà đất nơi khác không. Loại trừ hồ sơ cố tình lách luật.",
                   color: "bg-indigo-700"
                 },
                 { 
                   step: "CÔNG BỐ", 
                   title: "Bước 4: Công khai danh sách và tổ chức bốc thăm", 
-                  desc: "Các hồ sơ đạt tiêu chuẩn sơ bộ sẽ được công khai danh sách minh bạch 20 ngày tại Cổng thông tin của Sở. Sau đó tổ chức ngày bốc thăm vị trí căn hộ ưu đãi có sự giám sát của thanh tra Sở.",
+                  desc: "Các hồ sơ đạt tiêu chuẩn sơ bộ sẽ được công khai danh sách minh bạch 20 ngày tại Cổng thông tin chính thức. Sau đó tổ chức ngày bốc thăm vị trí căn hộ ưu đãi có sự giám sát của cơ quan liên ngành.",
                   color: "bg-emerald-700"
                 },
                 { 
                   step: "HỢP ĐỒNG", 
                   title: "Bước 5: Ký Hợp đồng mua bán & Đăng ký đóng tiền tiến độ", 
-                  desc: "Cư dân may mắn bốc được căn thực hiện ký HĐMB trực tiếp với chủ đầu tư dự án dưới sự giám sát của Sở, đăng ký giải ngân các gói vay tín dụng an sinh xã hội ưu đãi 4.8% của Nhà nước.",
+                  desc: "Cư dân may mắn bốc được căn thực hiện ký HĐMB trực tiếp với chủ đầu tư dự án dưới sự giám sát quản lý, đăng ký giải ngân các gói vay tín dụng an sinh xã hội ưu đãi 4.8% của Nhà nước.",
                   color: "bg-purple-700"
                 }
               ].map((rd, index) => (
@@ -1320,7 +1320,7 @@ export function DocumentRequirements() {
         <div className="mt-8 pt-4 border-t border-slate-150 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-semibold text-slate-500 select-none">
           <div className="flex items-center gap-2">
             <ScrollText className="h-4.5 w-4.5 text-slate-400" />
-            <span className="font-sans text-[11px]">Sở Xây dựng thành phố Đà Nẵng áp dụng thẩm duyệt biểu điểm</span>
+            <span className="font-sans text-[11px]">Hội đồng Thẩm định áp dụng thẩm duyệt biểu điểm công bằng</span>
           </div>
           <span className="font-sans font-extrabold text-[10px] text-[#00355f] tracking-wider uppercase bg-blue-50 border border-blue-150 px-3 py-1 rounded-full">
             Ban hành chính thức 2026

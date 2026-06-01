@@ -49,12 +49,12 @@ const fallbackArticles: Article[] = [
 
 Mục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 10.000 căn hộ chất lượng cao với các chính sách trợ giá hấp dẫn. Trong đó, tập trung khai thác đồng bộ các khu đô thị vệ tinh xung quanh Phường Hòa Khánh Bắc, Phường Hòa Hiệp Nam và dọc theo các trục giao thông chính của thành phố.
 
-Sở Xây dựng Đà Nẵng sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.`,
+Hội đồng liên ngành thành phố sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.`,
     date: "20/05/2026",
     category: "Announcement",
     categoryLabel: "Thông Báo Sắp Mở",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-    author: "Văn phòng Sở Xây dựng Đà Nẵng"
+    author: "Cổng Tra Cứu NOXH"
   },
   {
     id: "news-2",
@@ -78,9 +78,9 @@ Sở Xây dựng Đà Nẵng sẽ đóng vai trò chủ trì điều phối qu�
     id: "news-3",
     title: "Danh sách bốc thăm đợt 1 dự án chung cư NOXH tại Phường Hòa Khánh Bắc",
     excerpt: "Công khai kết quả thẩm định điểm và công bố số lượng căn hộ bốc thăm cụ thể thuộc Dự án Căn hộ Sun Garden Hòa Khánh. Tổng cộng có 350 căn hoàn tất bàn bàn giao kỹ thuật.",
-    content: `Sở Xây dựng thành phố Đà Nẵng đã phối hợp cùng Công ty Liên doanh Phát triển Đô thị Sun Garden tổ chức nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.
+    content: `Ban quản lý dự án thành phố Đà Nẵng đã phối hợp cùng Công ty Liên doanh Phát triển Đô thị Sun Garden tổ chức nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.
 
-Dự án Sun Garden Hòa Khánh ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó Sở đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).
+Dự án Sun Garden Hòa Khánh ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó Hội đồng đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).
 
 Buổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám sát trực tiếp của cơ quan thanh tra thành phố vào sáng ngày 01/06/2026 tại Nhà văn hóa Phường Hòa Khánh Bắc và truyền hình trực tuyến qua cổng dữ liệu thông tin đại chúng.`,
     date: "05/05/2026",
@@ -157,7 +157,7 @@ export function NewsSection() {
   const standardArticles = filteredArticles.length > 1 ? filteredArticles.slice(1) : [];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8 animate-fade-up relative">
+    <div className="max-w-[1600px] mx-auto space-y-8 animate-fade-up relative">
       
 
 
@@ -335,7 +335,7 @@ export function NewsSection() {
                 <div className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100/70 border border-blue-200/50 px-4 py-2 rounded-2xl transition">
                   Đọc toàn văn <ArrowRight className="h-3.5 w-3.5 text-blue-700 group-hover:translate-x-1.5 transition-transform duration-300" />
                 </div>
-                <span className="text-[10px] font-bold text-slate-400 italic">Sở Xây dựng ĐN</span>
+                <span className="text-[10px] font-bold text-slate-400 italic">Cổng Tra cứu NOXH</span>
               </div>
             </div>
           </div>

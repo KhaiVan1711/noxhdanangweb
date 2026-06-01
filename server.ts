@@ -84,7 +84,7 @@ const DEFAULT_PROJECTS = [
     requirements: [
       "Chưa từng đứng tên sở hữu đất nền hay nhà ở tại địa bàn TP. Đà Nẵng",
       "Là công nhân, viên chức, cán bộ hoặc người lao động tự do có thu nhập thấp dưới quy định",
-      "Thủ tục đăng ký xét duyệt và tính điểm ưu tiên thông qua Sở Xây dựng Đà Nẵng"
+      "Thủ tục đăng ký xét duyệt và tính điểm ưu tiên thông qua Cơ quan Thẩm quyền"
     ]
   },
   {
@@ -116,7 +116,7 @@ const DEFAULT_PROJECTS = [
     id: "an-phu-dong",
     name: "NOXH An Phú Đông Cẩm Lệ",
     location: "Phường Hòa Thọ Đông, Cẩm Lệ, Đà Nẵng",
-    investor: "Sở Xây dựng Đà Nẵng phối hợp Liên minh HTX",
+    investor: "Ban quản lý dự án phối hợp Liên minh HTX",
     status: "Sắp mở bán",
     price: "~11.8tr/m²",
     priceRaw: 11800000,
@@ -194,12 +194,12 @@ const DEFAULT_NEWS = [
     id: "news-1",
     title: "Đà Nẵng công bố đề án phát triển 10.000 căn hộ nhà ở xã hội đến năm 2030",
     excerpt: "UBND thành phố vừa thông qua lộ trình phân bổ quỹ đất xây dựng định hướng chuỗi dự án trọng vùng tại quận Liên Chiểu, Cẩm Lệ, Ngũ Hành Sơn nhằm đảm bảo nơi an cư cho người lao động, gia đình cận nghèo địa phương.",
-    content: "Chiều ngày 20/5/2026, UBND TP. Đà Nẵng đã chính thức ký duyệt Đề án quy hoạch tổng thể nhà ở xã hội (NOXH) giai đoạn 2026 - 2530. \n\nMục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 10.000 căn hộ chất lượng cao với các chính sách trợ giá hấp dẫn. Trong đó, tập trung khai thác đồng bộ các khu đô thị vệ tinh xung quanh khu công nghiệp Hòa Khánh, khu công nghệ cao Đà Nẵng và dọc theo các trục giao thông chính của thành phố.\n\nSở Xây dựng Đà Nẵng sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.",
+    content: "Chiều ngày 20/5/2026, UBND TP. Đà Nẵng đã chính thức ký duyệt Đề án quy hoạch tổng thể nhà ở xã hội (NOXH) giai đoạn 2026 - 2530. \n\nMục tiêu cụ thể của đề án là hoàn thiện xây dựng ít nhất 10.000 căn hộ chất lượng cao với các chính sách trợ giá hấp dẫn. Trong đó, tập trung khai thác đồng bộ các khu đô thị vệ tinh xung quanh khu công nghiệp Hòa Khánh, khu công nghệ cao Đà Nẵng và dọc theo các trục giao thông chính của thành phố.\n\nHội đồng liên ngành thành phố sẽ đóng vai trò chủ trì điều phối quỹ đất công, thực hiện đấu thầu chủ đầu tư công khai, minh bạch nhằm bảo đảm tiêu chuẩn an toàn kỹ thuật xây dựng và thời gian bàn bàn giao đúng hạn. Người dân thuộc diện độc thân thu nhập dưới 25 triệu/tháng hoặc đã kết hôn dưới 50 triệu/tháng sẽ được ưu tiên bốc thăm quỹ nhà đợt đầu.",
     date: "20/05/2026",
     category: "Announcement",
     categoryLabel: "Thông Báo Sửa",
     image: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=800",
-    author: "Văn phòng Sở Xây dựng Đà Nẵng"
+    author: "Cổng Tra Cứu NOXH"
   },
   {
     id: "news-2",
@@ -216,7 +216,7 @@ const DEFAULT_NEWS = [
     id: "news-3",
     title: "Danh sách bốc thăm đợt 1 dự án chung cư NOXH tại Liên Chiểu",
     excerpt: "Công khai kết quả thẩm định điểm và công bố số lượng căn hộ bốc thăm cụ thể thuộc Dự án Căn hộ Sun Garden Liên Chiểu. Tổng cộng có 350 căn hoàn tất bàn bàn giao kỹ thuật.",
-    content: "Sở Xây dựng thành phố Đà Nẵng đã phối hợp cùng Công ty Liên doanh Phát triển Đô thị Sun Garden tổ chức nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.\n\nDự án Sun Garden Liên Chiểu ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó Sở đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).\n\nBuổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám sát trực tiếp của cơ quan thanh tra thành phố vào sáng ngày 01/06/2026 tại Nhà văn hóa quận Liên Chiểu và truyền hình trực tuyến qua cổng dữ liệu thông tin đại chúng.",
+    content: "Ban quản lý dự án thành phố Đà Nẵng đã phối hợp cùng Công ty Liên doanh Phát triển Đô thị Sun Garden tổ chức nghiệm thu kỹ thuật và công bố danh sách hộ gia đình đủ điều kiện vào vòng bốc thăm đợt 1.\n\nDự án Sun Garden Liên Chiểu ghi nhận 1.200 hồ sơ nộp đăng ký đợt 2, qua đó Hội đồng đã thẩm duyệt rút gọn và xếp tuyển thang điểm 100 chọn ra 350 hộ gia đình đạt điểm số cao nhất (đáp ứng trọn vẹn điểm ưu tiên công nhân và khó khăn về nhà ở hiện trạng).\n\nBuổi lễ bốc thăm căn hộ sẽ diễn ra công khai dưới sự giám sát trực tiếp của cơ quan thanh tra thành phố vào sáng ngày 01/06/2026 tại Nhà văn hóa quận Liên Chiểu và truyền hình trực tuyến qua cổng dữ liệu thông tin đại chúng.",
     date: "05/05/2026",
     category: "Construction",
     categoryLabel: "Tiến Độ Dự Án",
@@ -225,9 +225,9 @@ const DEFAULT_NEWS = [
   },
   {
     id: "news-4",
-    title: "Cảnh báo mạo danh chuyên viên ban ngành Sở để nhận tiền 'cọc giữ chỗ' nhà ở xã hội",
-    excerpt: "Sở Xây dựng Đà Nẵng đưa ra thông báo khẩn cấp khuyến cáo người lao động tránh các hội nhóm môi giới thu phí hoa hồng để đặt chỗ mua căn hộ trái luật.",
-    content: "Sở Xây dựng thành phố Đà Nẵng vừa phát đi thông báo khẩn số 112/TB-SXD về việc phát hiện một số đối tượng, sàn giao dịch bất động sản mạo danh là chuyên viên Ban chính sách nhà ở để thu nhận phí dịch vụ, tiền cọc 'đảm bảo 100% bốc trúng' căn hộ NOXH tại khu vực quận Ngũ Hành Sơn.\n\nSở Xây dựng tái khẳng định:\n- Tất cả quy trình tiếp nhận, hướng dẫn khai phôi đơn và thẩm duyệt chấm điểm hồ sơ hoàn toàn **MIỄN PHÍ** 100%.\n- Không hề có bất kỳ ủy quyền môi giới trung gian cho bất kỳ đơn vị sàn thương mại tự do nào.\n- Mọi hình thức hứa hẹn giữ chỗ đóng tiền mặt đều là hành vi gian lận pháp luật, người dân khi phát hiện vui lòng trình báo ngay cho cơ quan công an quận gần nhất để kịp thời can thiệp xử lý hình sự.",
+    title: "Cảnh báo mạo danh chuyên viên ban ngành để nhận tiền 'cọc giữ chỗ' nhà ở xã hội",
+    excerpt: "Cơ quan thẩm quyền đưa ra thông báo khẩn cấp khuyến cáo người lao động tránh các hội nhóm môi giới thu phí hoa hồng để đặt chỗ mua căn hộ trái luật.",
+    content: "Cơ quan Quản lý nhà ở đại diện thành phố Đà Nẵng vừa phát đi thông báo khẩn số 112/TB-CP về việc phát hiện một số đối tượng, sàn giao dịch bất động sản mạo danh là chuyên viên Ban chính sách nhà ở để thu nhận phí dịch vụ, tiền cọc 'đảm bảo 100% bốc trúng' căn hộ NOXH tại khu vực quận Ngũ Hành Sơn.\n\nCơ quan chức năng tái khẳng định:\n- Tất cả quy trình tiếp nhận, hướng dẫn khai phôi đơn và thẩm duyệt chấm điểm hồ sơ hoàn toàn **MIỄN PHÍ** 100%.\n- Không hề có bất kỳ ủy quyền môi giới trung gian cho bất kỳ đơn vị sàn thương mại tự do nào.\n- Mọi hình thức hứa hẹn giữ chỗ đóng tiền mặt đều là hành vi gian lận pháp luật, người dân khi phát hiện vui lòng trình báo ngay cho cơ quan công an quận gần nhất để kịp thời can thiệp xử lý hình sự.",
     date: "28/04/2026",
     category: "Announcement",
     categoryLabel: "Tin Cảnh Giác",
@@ -372,16 +372,16 @@ app.post("/api/chat", async (req, res) => {
       const p = doc.data();
       const pReqs = Array.isArray(p.requirements) 
         ? p.requirements.map((r: string) => `    * ${r}`).join("\n") 
-        : "    * Đáp ứng điều kiện chung của Sở Xây dựng Đà Nẵng";
+        : "    * Đáp ứng điều kiện chung của Cơ quan Quản lý Quy hoạch";
       return `- **Tên dự án: ${p.name}**
     * Địa chỉ/Vị trí: ${p.location} (Phường/Xã: ${p.districts || "Chưa cập nhật"})
-    * Chủ đầu tư: ${p.investor || "Ban quản lý dự án Sở Xây dựng"}
+    * Chủ đầu tư: ${p.investor || "Ban quản lý dự án nhà ở xã hội"}
     * Trạng thái hồ sơ: ${p.status || "Chưa xác định"}
     * Đơn giá: ${p.price || "Chưa công bố"} (Giá trị nội bộ: ${p.priceRaw ? p.priceRaw.toLocaleString('vi-VN') + ' VNĐ/m²' : 'N/A'})
     * Tiến độ xây dựng: ${p.progress || 0}%
     * Quy mô thiết kế: ${p.scale || "Đang cập nhật"}
     * Loại căn hộ: ${p.types || "Căn hộ tiêu chuẩn thương mại xã hội"}
-    * Hạn chót nộp hồ sơ / Dự kiến bàn giao: ${p.deadline || "Xem hướng dẫn Sở"}
+    * Hạn chót nộp hồ sơ / Dự kiến bàn giao: ${p.deadline || "Xem hướng dẫn chi tiết"}
     * Hotline tư vấn: ${p.hotline || "1900 1000"}
     * Yêu cầu / Điều kiện đặc thù của dự án:
 ${pReqs}`;
@@ -402,7 +402,7 @@ ${pReqs}`;
     }).join("\n");
 
     const systemInstruction = `
-Bạn là NOXH Bot, một Trợ lý ảo cực kỳ am hiểu và tận tụy của Cổng Tra cứu Nhà ở Xã hội (NOXH) Thành phố Đà Nẵng, do Sở Xây dựng thành phố vận hành trực tiếp.
+Bạn là NOXH Bot, một Trợ lý ảo cực kỳ am hiểu và tận tụy của Cổng Tra cứu Nhà ở Xã hội (NOXH) Thành phố Đà Nẵng, do Cơ quan quản lý vận hành trực tiếp.
 Nhiệm vụ của bạn là giải đáp chính xác, trung thực, rõ ràng và ấm áp cho mọi thắc mắc của người dân (Dân cư) Việt Nam về các dự án nhà ở xã hội đang hoạt động tại Đà Nẵng.
 
 --- CƠ SỞ DỮ LIỆU THỜI GIAN THỰC TỪ HỆ THỐNG QUẢN LÝ ---
@@ -413,21 +413,21 @@ Nhiệm vụ của bạn là giải đáp chính xác, trung thực, rõ ràng v
   - Điều kiện thu nhập: Tổng thu nhập thực tế của tất cả thành viên trong hộ gia đình KHÔNG thuộc diện đóng thuế thu nhập cá nhân (TNCN) thường xuyên.
   - Điều kiện thực trạng nhà ở: Gia đình chưa từng đứng tên quyền sử dụng đất hoặc sở hữu nhà riêng tại Đà Nẵng; diện tích sàn ở bình quân của cả hộ hiện tại dưới 10m²/người (hoặc chuẩn mới dưới 15m²/người tùy hộ giải tỏa tái định cư).
 
-2. Danh sách tất cả các Dự án NOXH chính thức của Đà Nẵng trực thuộc hệ thống Sở:
+2. Danh sách tất cả các Dự án NOXH chính thức của Đà Nẵng trực thuộc hệ thống Cổng Tra Cứu:
 ${projectsListStr}
 
-3. Các thông báo, văn bản pháp luật, chính sách và tin cảnh báo mới nhất từ Sở Xây dựng:
+3. Các thông báo, văn bản pháp luật, chính sách và tin cảnh báo mới nhất từ Cơ quan quản lý:
 ${newsListStr}
 
-4. Thống kê thông tin vận hành từ Sở Xây dựng:
+4. Thống kê thông tin vận hành hệ thống:
 ${statsListStr}
 
 --- QUY TẮC PHÁT NGÔN & ỨNG XỬ THỰC TẾ ---
 - Luôn xưng danh là "NOXH Bot", xưng hô lễ phép "Dạ chào anh/chị", "Kính chào Dân cư" hoặc "Dạ, em chào anh/chị ạ".
 - Trả lời bằng tiếng Việt lịch sự, súc tích, chuyên nghiệp có cấu trúc Markdown rõ nét với các gạch đầu dòng và bôi đậm tiêu đề lớn để người dân dễ nhìn và hiểu ngay.
-- CHỈ phản hồi tin tức dựa trên danh sách dự án và bài báo THỰC TẾ TRÊN DATABASE ở trên. Nếu người dân hỏi về dự án hoàn toàn lạ lẫm hoặc không xuất hiện trong danh sách dữ liệu trên, hãy giải thích khéo léo và duyên dáng rằng "Hiện dự án này chưa được công bố hoặc Sở Xây dựng thành phố chưa phê duyệt trên hệ thống dữ liệu số chính thống."
+- CHỈ phản hồi tin tức dựa trên danh sách dự án và bài báo THỰC TẾ TRÊN DATABASE ở trên. Nếu người dân hỏi về dự án hoàn toàn lạ lẫm hoặc không xuất hiện trong danh sách dữ liệu trên, hãy giải thích khéo léo và duyên dáng rằng "Hiện dự án này chưa được công bố hoặc Cơ quan quản lý chưa phê duyệt trên hệ thống dữ liệu số chính thống."
 - Đưa ra lời khuyên chi tiết về đơn thư biểu mẫu (các loại Đơn mẫu số 01 đăng ký, Đơn mẫu số 03 xác nhận thực trạng nhà ở của cơ quan hoặc phường xã).
-- Phát đi cảnh báo khẩn cấp cho người dân: Tuyệt đối tránh xa các hội nhóm facebook, zalo, môi giới tự dưng đòi thu "phí hoa hồng bôi trơn", "đóng cọc giữ căn hộ đẹp" trái luật pháp vì Sở Xây dựng Đà Nẵng xử lý bốc thăm công khai hoàn toàn MIỄN PHÍ.
+- Phát đi cảnh báo khẩn cấp cho người dân: Tuyệt đối tránh xa các hội nhóm facebook, zalo, môi giới tự dưng đòi thu "phí hoa hồng bôi trơn", "đóng cọc giữ căn hộ đẹp" trái luật pháp vì hệ thống xử lý bốc thăm công khai hoàn toàn MIỄN PHÍ.
 `;
 
     const { ai, key } = await getLiveAIClient();
@@ -439,7 +439,7 @@ ${statsListStr}
         return `- **${p.name}** (${p.districts || "Phường xã"}): Trạng thái ${p.status || "Chưa rõ"}, đơn giá ${p.price || "Chưa rõ"}, tiến độ ${p.progress || 0}%`;
       }).join("\n");
 
-      const demoResponse = `Dạ chào anh/chị! Hiện tại chatbot của Sở đang chạy ở chế độ mô phỏng trực tuyến (không nhận được GEMINI_API_KEY hợp lệ hoặc chưa lưu). 
+      const demoResponse = `Dạ chào anh/chị! Hiện tại chatbot của hệ thống đang chạy ở chế độ mô phỏng trực tuyến (không nhận được GEMINI_API_KEY hợp lệ hoặc chưa lưu). 
 
 Tuy nhiên, chatbot vẫn đồng bộ thông tin dự án hiện thực từ hệ thống cơ sở dữ liệu Đà Nẵng cho anh/chị tham khảo ngay lúc này:
 
@@ -585,7 +585,13 @@ app.get("/api/hero-image", async (req, res) => {
 app.get("/api/projects", async (req, res) => {
   try {
     const snap = await getDocs(collection(db, "projects"));
-    const list = snap.docs.map(doc => doc.data());
+    const list = snap.docs.map(doc => {
+      const data = doc.data();
+      if (!data.id) {
+        data.id = doc.id;
+      }
+      return data;
+    });
     res.json(list);
   } catch (err: any) {
     console.error("GET /api/projects error:", err);
@@ -615,7 +621,18 @@ app.post("/api/projects", async (req, res) => {
 app.delete("/api/projects/:id", async (req, res) => {
   try {
     const id = req.params.id;
+    // 1. Direct delete by ID
     await deleteDoc(doc(db, "projects", id));
+
+    // 2. Multi-strategy query: scan and delete items where doc.id or data.id matches
+    const snap = await getDocs(collection(db, "projects"));
+    for (const d of snap.docs) {
+      const data = d.data();
+      if (d.id === id || data.id === id) {
+        await deleteDoc(doc(db, "projects", d.id));
+      }
+    }
+
     res.json({ success: true });
   } catch (err: any) {
     console.error("DELETE /api/projects/:id error:", err);
@@ -629,7 +646,13 @@ app.delete("/api/projects/:id", async (req, res) => {
 app.get("/api/news", async (req, res) => {
   try {
     const snap = await getDocs(collection(db, "news"));
-    const list = snap.docs.map(doc => doc.data());
+    const list = snap.docs.map(doc => {
+      const data = doc.data();
+      if (!data.id) {
+        data.id = doc.id;
+      }
+      return data;
+    });
     
     // Sort news decending
     list.sort((a: any, b: any) => {
@@ -686,7 +709,18 @@ app.post("/api/news", async (req, res) => {
 app.delete("/api/news/:id", async (req, res) => {
   try {
     const id = req.params.id;
+    // 1. Direct delete by ID
     await deleteDoc(doc(db, "news", id));
+
+    // 2. Scan and delete matching pieces where doc.id or data.id matches
+    const snap = await getDocs(collection(db, "news"));
+    for (const d of snap.docs) {
+      const data = d.data();
+      if (d.id === id || data.id === id) {
+        await deleteDoc(doc(db, "news", d.id));
+      }
+    }
+
     res.json({ success: true });
   } catch (err: any) {
     console.error("DELETE /api/news/:id error:", err);
@@ -796,6 +830,66 @@ app.post("/api/config", async (req, res) => {
 });
 
 
+// ─── AI ASSISTANT GENERATE API ROUTE ────────────────────────────────────────
+
+app.post("/api/assistant/generate", async (req, res) => {
+  try {
+    const { prompt, type, field } = req.body;
+    if (!prompt) {
+      return res.status(400).json({ error: "Prompt is required" });
+    }
+
+    const { ai, key } = await getLiveAIClient();
+
+    if (key && key !== "AIzaSy..." && key !== "") {
+      const result = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: `Bạn là trợ lý AI chuyên viên phân tích hạ tầng và soạn thảo nội dung của Ban Quản lý Quy hoạch Đà Nẵng chuyên về Nhà ở xã hội (NOXH). 
+Hãy viết nội dung dựa trên yêu cầu sau. 
+
+Yêu cầu cụ thể: "${prompt}"
+Phân loại: ${type || "general"}
+Trường dữ liệu cần soạn thảo: ${field || "general"}
+
+Quy tắc quan trọng:
+1. Trả lời bằng tiếng Việt, sử dụng ngôn từ chính thức, nghiêm túc, chuẩn mực pháp lý về nhà đất xã hội Việt Nam.
+2. Trả về đúng nội dung được yêu cầu. Tuyệt đối KHÔNG có lời mở đầu, không giải thích, không "Dưới đây là...", không có bất kỳ ký hiệu thừa nào ngoài nội dung chính.
+3. Không định dạng markdown kiểu tiêu đề lớn (#, ##) hay bôi đậm dồn dập, chỉ trả về văn bản sạch.
+4. Nếu trường dữ liệu là Yêu cầu / Điều kiện nộp hồ sơ (requirements), hãy viết dưới dạng các dòng gạch đầu dòng ngắn, rõ ràng, phân tách nhau bằng dấu xuống dòng (Enter), ví dụ:
+- Chưa sở hữu đất đai hoặc nhà ở tại Đà Nẵng
+- Đăng trú cư trú trên 1 năm tại địa phương`,
+        config: {
+          temperature: 0.7,
+        }
+      });
+
+      const responseText = result.text || "";
+      return res.json({ text: responseText.trim() });
+    } else {
+      // Mock assistant output based on field type if no Gemini API Key is stored
+      let mockText = "";
+      if (field === "requirements") {
+        mockText = "- Chưa từng đứng tên quyền sử dụng đất hoặc sở hữu nhà riêng tại TP. Đà Nẵng\n- Thời gian đăng trú cư trú/tạm trú thực tế liên tục từ 1 năm trở lên\n- Thu nhập hộ gia đình không thuộc diện phải đóng thuế thu nhập cá nhân (TNCN) thường xuyên\n- Đang trực tiếp tham gia đóng Bảo hiểm Xã hội tại Đà Nẵng tối thiểu 12 tháng";
+      } else if (field === "scale") {
+        mockText = `Cụm công trình hiện đại gồm có 2 tòa chung cư cao 18 tầng nổi, cung ứng 650 căn hộ phân khúc xã hội với mật độ xây dựng chỉ 38%. Căn hộ đa dạng từ 1.5 phòng ngủ đến 3 phòng ngủ (diện tích 48m² - 74m²), đáp ứng chuẩn về phòng cháy chữa cháy, an ninh camera số hóa và hành lang thông thoáng gió tự nhiên.`;
+      } else if (field === "excerpt") {
+        mockText = `Hướng dẫn chi tiết thủ tục hành chính bổ sung hồ sơ và hồ sơ số hóa đợt bốc thăm nhà ở xã hội mới nhất trên địa bàn TP. Đà Nẵng.`;
+      } else if (field === "content") {
+        mockText = `Nhằm bảo đảm tính công khai, minh bạch tuyệt đối trong việc thụ hưởng điều kiện an sinh xã hội, Cơ quan chức năng TP. Đà Nẵng chính thức đưa vào vận hành hệ thống số hóa hồ sơ tự động. Toàn bộ quy trình kiểm tra chéo cơ sở dữ liệu đất đai cư trú và mã số thuế cá nhân sẽ được xử lý tự động trong vòng 5 ngày làm việc.\n\nNgười dân lưu ý chỉ chuẩn bị Đơn đăng ký theo đúng Mẫu số 01 của Bộ Xây dựng ban hành và trực tiếp nộp tại Văn phòng Tiếp nhận một cửa, cam kết không mất bất kỳ khoản chi phí bôi trơn nào cho cò mồi bên ngoài.`;
+      } else if (field === "name" || field === "title") {
+        mockText = `Chung cư Nhà ở Xã hội Sunshine Hòa Khánh`;
+      } else {
+        mockText = `Hệ thống hạ tầng tiện ích được thiết kế phục vụ tối đa nhu cầu của cán bộ công nhân viên thu nhập trung bình thấp, bao gồm vườn hoa cảnh quan trung tâm, nhà giữ trẻ công lập nội khu và sảnh cộng đồng khép kín.`;
+      }
+      return res.json({ text: mockText + " (Mô phỏng AI)" });
+    }
+  } catch (error: any) {
+    console.error("AI Assistant Generation error:", error);
+    res.status(505).json({ error: error.message });
+  }
+});
+
+
 // ─── EXTREMELY SOPHISTICATED WEBHOCK DOCK GENERATOR ──────────────────────────
 
 function getMockNewsTemplates() {
@@ -807,12 +901,12 @@ function getMockNewsTemplates() {
       category: "Construction",
       categoryLabel: "Tiến Độ Dự Án",
       image: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&q=80&w=800",
-      author: "Phòng Dự án - Sở Xây dựng Đà Nẵng (n8n automated)"
+      author: "Phòng Dự án - Ban quản lý đô thị Đà Nẵng (n8n automated)"
     },
     {
       title: "Hỗ trợ vay 4.8%/năm mua nhà ở xã hội từ gói tín dụng ưu đãi 120.000 tỷ",
       excerpt: "Ngân hàng Chính sách Xã hội Chi nhánh Đà Nẵng bổ sung hạn mức vay mua nhà ở xã hội lên đến 25 năm cho các cặp vợ chồng trẻ.",
-      content: `Sở Xây dựng Đà Nẵng phối hợp cùng Ngân hàng Chính sách Xã hội công bố chương trình tăng hạn mức và nới lỏng điều kiện tiếp cận nguồn vốn vay ưu đãi.\n\nTheo đó, lãi suất cho vay hỗ trợ tạo lập nhà ở xã hội sẽ giữ ổn định ở mức 4.8%/năm. Thời gian vay được kéo dài tối đa lên tới 25 năm nhằm đảm bảo mỗi tháng gia đình chỉ phải chi trả gốc lãi dao động từ 3 - 5 triệu đồng, phù hợp túi tiền của người lao động phổ thông.\n\nHồ sơ bao gồm Đơn đăng ký theo mẫu của Ngân hàng kèm xác nhận thực trạng chưa sở hữu đất ở của UBND Phường nơi đăng trú.`,
+      content: `Ban quản lý dự án thành phố phối hợp cùng Ngân hàng Chính sách Xã hội công bố chương trình tăng hạn mức và nới lỏng điều kiện tiếp cận nguồn vốn vay ưu đãi.\n\nTheo đó, lãi suất cho vay hỗ trợ tạo lập nhà ở xã hội sẽ giữ ổn định ở mức 4.8%/năm. Thời gian vay được kéo dài tối đa lên tới 25 năm nhằm đảm bảo mỗi tháng gia đình chỉ phải chi trả gốc lãi dao động từ 3 - 5 triệu đồng, phù hợp túi tiền của người lao động phổ thông.\n\nHồ sơ bao gồm Đơn đăng ký theo mẫu của Ngân hàng kèm xác nhận thực trạng chưa sở hữu đất ở của UBND Phường nơi đăng trú.`,
       category: "Policy",
       categoryLabel: "Kính Gửi Cử Tri",
       image: "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&q=80&w=800",
@@ -821,11 +915,11 @@ function getMockNewsTemplates() {
     {
       title: "Nghiêm cấm bán chênh, sang nhượng suất mua nhà xã hội sai đối tượng",
       excerpt: "Thanh tra thành phố ban hành chỉ thị rà soát kiểm tra toàn diện 10 khu chung cư xã hội đã bàn giao để xử lý các chung cư mua bán sang tay.",
-      content: `Chiều qua, Thanh tra Sở Xây dựng Đà Nẵng đã có văn bản hỏa tốc đôn đốc chấn chỉnh việc mua bán lại căn hộ tại các khu dự án thu nhập thấp.\n\nTheo Luật Nhà ở hiện hành, căn hộ thuộc diện ưu đãi bất động sản xã hội chỉ được phép bán lại sau tối thiểu 05 năm kể từ ngày hoàn tất tiền mua và được cấp Sổ hồng. Mọi giao dịch bằng Giấy viết phôi tay, Văn bản ủy quyền lập lờ tại văn phòng công chứng tự do đều không có giá trị pháp lý và sẽ bị cưỡng chế thu hồi lại nhà lập tức.\n\nĐường dây nóng của Sở (0236.3822123) sẵn sằng tiếp nhận tố giác của công dân từ hôm nay.`,
+      content: `Chiều qua, Thanh tra thành phố đã có văn bản hỏa tốc đôn đốc chấn chỉnh việc mua bán lại căn hộ tại các khu dự án thu nhập thấp.\n\nTheo Luật Nhà ở hiện hành, căn hộ thuộc diện ưu đãi bất động sản xã hội chỉ được phép bán lại sau tối thiểu 05 năm kể từ ngày hoàn tất tiền mua và được cấp Sổ hồng. Mọi giao dịch bằng Giấy viết phôi tay, Văn bản ủy quyền lập lờ tại văn phòng công chứng tự do đều không có giá trị pháp lý và sẽ bị cưỡng chế thu hồi lại nhà lập tức.\n\nĐường dây nóng hỗ trợ (0236.3822123) sẵn sằng tiếp nhận tố giác của công dân từ hôm nay.`,
       category: "Announcement",
       categoryLabel: "Cảnh Giác Cao",
       image: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&q=80&w=800",
-      author: "Thanh tra Sở Xây dựng Đà Nẵng (n8n automated)"
+      author: "Thanh tra Đô thị Đà Nẵng (n8n automated)"
     }
   ];
 }
@@ -838,13 +932,13 @@ app.post("/api/news/test-push", async (req, res) => {
     let category: "Policy" | "Announcement" | "Construction" = "Policy";
     let categoryLabel = "Thông tin chính sách";
     let image = "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800";
-    let author = "Sở Xây dựng Đà Nẵng (AI n8n push)";
+    let author = "Cổng Tra Cứu (AI n8n push)";
 
     const { ai, key } = await getLiveAIClient();
 
     if (key && key !== "AIzaSy..." && key !== "") {
       try {
-        const prompt = `Bạn là biên tập viên tin tức cho cổng thông tin Nhà Ở Xã Hội Sở Xây dựng Đà Nẵng. 
+        const prompt = `Bạn là biên tập viên tin tức cho Cổng thông tin Nhà Ở Xã Hội Đà Nẵng. 
 Hãy viết một bài báo hoàn toàn MỚI, cực kỳ thời sự về tiến độ xây dựng căn hộ hoặc hướng dẫn làm thủ tục nộp hồ sơ nhà ở xã hội (NOXH) tại Đà Nẵng năm 2026.
 Hãy xuất kết quả dưới dạng JSON object hợp lệ chứa các trường sau:
 {
@@ -854,7 +948,7 @@ Hãy xuất kết quả dưới dạng JSON object hợp lệ chứa các trư�
   "category": "Chọn một trong 3 giá trị: 'Policy' hoặc 'Announcement' hoặc 'Construction'",
   "categoryLabel": "Nhãn tương ứng tiếng Việt (ví dụ: 'Điểm tin tiến độ', 'Văn bản chính sách', 'Thông báo nóng')",
   "image": "Một cấu hình ảnh Unsplash ngẫu nhiên về thành phố hoặc tòa nhà, ví dụ: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=800'",
-  "author": "Phòng Thông tin - Sở Xây dựng Đà Nẵng"
+  "author": "Phòng Thông tin - Cổng Tra Cứu"
 }
 Chú ý: Vui lòng TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không có markdown block hay rác ký tự ngoài JSON.`;
 
@@ -871,7 +965,7 @@ Chú ý: Vui lòng TRẢ VỀ DUY NHẤT một chuỗi JSON hợp lệ không c�
         if (generatedText) {
           const parsed = JSON.parse(generatedText.trim());
           title = parsed.title || "Chính sách đăng ký NOXH Đà Nẵng đổi mới";
-          excerpt = parsed.excerpt || "Sở Xây dựng Đà Nẵng chuẩn bị điều chỉnh thủ tục làm hồ sơ nộp trực tuyến.";
+          excerpt = parsed.excerpt || "Hội đồng Đà Nẵng chuẩn bị điều chỉnh thủ tục làm hồ sơ nộp trực tuyến.";
           content = parsed.content || "Nội dung đang được cập nhật.";
           category = (parsed.category || "Policy") as any;
           categoryLabel = parsed.categoryLabel || "Thông tin chính sách";

@@ -31,7 +31,7 @@
     },
     "News": {
       "title": "News",
-      "description": "Tin tức chính sách và thông báo Sở Xây dựng",
+      "description": "Tin tức chính sách và thông báo hệ thống",
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "Unique identifier" },
@@ -48,7 +48,7 @@
     },
     "Stat": {
       "title": "Stat",
-      "description": "Chỉ số thống kê từ Sở Xây dựng",
+      "description": "Chỉ số thống kê chung",
       "type": "object",
       "properties": {
         "id": { "type": "string", "description": "Mã chỉ mục ví dụ: stat-1" },
@@ -82,7 +82,7 @@
     },
     "/stats/{statId}": {
       "schema": "Stat",
-      "description": "Các chỉ số thống kê vận hành NOXH của Sở Xây dựng"
+      "description": "Các chỉ số thống kê vận hành hệ thống NOXH"
     },
     "/configs/{configId}": {
       "schema": "Config",

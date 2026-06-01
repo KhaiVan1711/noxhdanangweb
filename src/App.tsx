@@ -53,6 +53,7 @@ export default function App() {
 
   // Selected GIS details
   const [gisSelectedProject, setGisSelectedProject] = useState<Project | null>(null);
+  const [mapResetCount, setMapResetCount] = useState(0);
 
   // Modular Project Details Modal state
   const [modalProject, setModalProject] = useState<Project | null>(null);
@@ -109,7 +110,13 @@ export default function App() {
     const unsubscribeProjects = onSnapshot(
       collection(db, "projects"),
       (snapshot) => {
-        const liveProj = snapshot.docs.map(doc => doc.data() as Project);
+        const liveProj = snapshot.docs.map(doc => {
+          const data = doc.data() as Project;
+          if (!data.id) {
+            data.id = doc.id;
+          }
+          return data;
+        });
         if (liveProj.length > 0) {
           setProjects(liveProj);
           setGisSelectedProject((currentSelected) => {
@@ -179,6 +186,17 @@ export default function App() {
     }
   };
 
+  // Switch to Map and Reset filters to show full-city
+  const handleNavigateToMapTabWithReset = () => {
+    setGisSelectedProject(null);
+    setSelectedWard("");
+    setSearchKey("");
+    setStatusFilter("all");
+    setMapResetCount((prev) => prev + 1);
+    setActiveTab("map");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // Filter projects computation
   const filteredCollection = projects.filter((p) => {
     const matchesSearch = p.name.toLowerCase().includes(searchKey.toLowerCase()) || 
@@ -213,7 +231,7 @@ export default function App() {
     {
       id: 5,
       q: "Quy trình tính điểm xét tuyển ưu tiên NOXH hoạt động như thế nào?",
-      a: "Sở Xây dựng Đà Nẵng áp dụng thang điểm 100 để thẩm định hồ sơ công bằng: Điểm đối tượng ưu tiên tối đa 40 điểm; Khó khăn về nhà ở hiện tại tối đa 30 điểm; Điều kiện cư trú, thâm niên cống hiến đóng góp tối đa 30 điểm. Các hồ sơ đạt thang điểm cao nhất sẽ được công khai phê duyệt bốc thăm vị trí căn hộ trước."
+      a: "Hệ thống áp dụng thang điểm 100 để thẩm định hồ sơ công bằng: Điểm đối tượng ưu tiên tối đa 40 điểm; Khó khăn về nhà ở hiện tại tối đa 30 điểm; Điều kiện cư trú, thâm niên cống hiến đóng góp tối đa 30 điểm. Các hồ sơ đạt thang điểm cao nhất sẽ được công khai phê duyệt bốc thăm vị trí căn hộ trước."
     }
   ];
 
@@ -222,7 +240,7 @@ export default function App() {
       
       {/* 1. TOP NAVIGATION BAR */}
       <header className="bg-white/90 backdrop-blur-2xl fixed top-0 w-full z-50 border-b border-slate-200/60 shadow-sm transition-all duration-300">
-        <div className="flex justify-between items-center h-24 px-4 sm:px-10 max-w-7xl mx-auto gap-4">
+        <div className="flex justify-between items-center h-24 px-4 sm:px-10 max-w-[1600px] mx-auto gap-4">
           
           {/* Logo Brand area */}
           <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
@@ -253,8 +271,12 @@ export default function App() {
               <button
                 key={tab.id}
                 onClick={() => {
-                  setActiveTab(tab.id as any);
-                  window.scrollTo({ top: 0, behavior: "smooth" });
+                  if (tab.id === "map") {
+                    handleNavigateToMapTabWithReset();
+                  } else {
+                    setActiveTab(tab.id as any);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }
                 }}
                 className={`px-2.5 py-1.5 sm:px-4 sm:py-2 rounded-full font-sans text-[11px] sm:text-xs font-bold transition-all select-none cursor-pointer whitespace-nowrap ${
                   activeTab === tab.id
@@ -351,7 +373,7 @@ export default function App() {
             {/* Glass blurring over and deep dim overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-white/40 via-white/25 to-[#f9f9fe]/90 backdrop-blur-[0.5px]"></div>
 
-            <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center mt-6">
+            <div className="relative z-10 w-full max-w-[1600px] mx-auto flex flex-col items-center text-center mt-6">
               
               {/* Display headers */}
               <h1 className="font-sans font-extrabold text-[32px] sm:text-[44px] lg:text-[50px] text-[#00355f] lg:leading-[1.2] tracking-tight max-w-5xl animate-fade-up">
@@ -411,10 +433,7 @@ export default function App() {
               {/* Fast link buttons of main resources */}
               <div className="flex flex-wrap items-center justify-center gap-3 animate-fade-up">
                 <button
-                  onClick={() => {
-                    setActiveTab("map");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
-                  }}
+                  onClick={handleNavigateToMapTabWithReset}
                   className="px-6 py-3 bg-white/85 hover:bg-white border border-slate-200 hover:border-slate-350 text-primary-dark font-sans font-bold text-xs rounded-full shadow-sm flex items-center gap-1.5 transition-all cursor-pointer"
                 >
                   <span className="material-symbols-outlined text-[16px] text-blue-800">map</span>
@@ -440,7 +459,7 @@ export default function App() {
         {activeTab === "home" && (
           <section className="bg-white border-y border-slate-200 py-24 px-4 sm:px-10 relative overflow-hidden select-none">
             <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:24px_24px] opacity-40"></div>
-            <div className="max-w-7xl mx-auto relative z-10 text-center">
+            <div className="max-w-[1600px] mx-auto relative z-10 text-center">
               
               <span className="text-[10px] bg-blue-50 text-[#00355f] font-bold px-3 py-1 rounded-full border border-blue-150 uppercase tracking-wider block mx-auto w-fit mb-3">
                 Dịch vụ trực tuyến
@@ -489,6 +508,8 @@ export default function App() {
                     onClick={() => {
                       if (bex.id === "chat") {
                         setChatOpen(true);
+                      } else if (bex.id === "map") {
+                        handleNavigateToMapTabWithReset();
                       } else {
                         setActiveTab(bex.id as any);
                         window.scrollTo({ top: 0, behavior: "smooth" });
@@ -523,7 +544,7 @@ export default function App() {
         {activeTab !== "home" && (
           <section 
             id="visualizer-container-anchor" 
-            className="border-t border-slate-200/50 py-16 px-4 sm:px-10 max-w-7xl mx-auto text-center animate-fade-in"
+            className="border-t border-slate-200/50 py-16 px-4 sm:px-10 max-w-[1600px] mx-auto text-center animate-fade-in"
           >
             {/* ACTIVE TAB VIEWS CONTAINER GRID */}
             <div className="min-h-[500px]">
@@ -561,6 +582,7 @@ export default function App() {
                         searchKey={searchKey}
                         selectedWard={selectedWard}
                         statusFilter={statusFilter}
+                        resetTrigger={mapResetCount}
                       />
 
                       {/* Compact Project Cards Grid right under the Map block! */}
@@ -854,7 +876,7 @@ export default function App() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#00355f] to-slate-905 opacity-90"></div>
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
             
-            <div className="max-w-7xl mx-auto relative z-10">
+            <div className="max-w-[1600px] mx-auto relative z-10">
               <div className="text-center mb-16">
                 <span className="text-[10px] uppercase font-bold tracking-widest text-[#00daf3]">
                   Tổng quan tình hình NOXH Đà Nẵng
@@ -1030,7 +1052,7 @@ export default function App() {
       {/* 4. MAIN FOOTER */}
       <footer className="bg-gradient-to-b from-[#011425] to-[#002544] text-slate-300 py-16 sm:py-20 px-6 sm:px-10 mt-auto border-t border-white/5 relative overflow-hidden font-sans">
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5 pointer-events-none"></div>
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-[1600px] mx-auto relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 pb-12 border-b border-white/10">
             {/* Left side brand column */}
             <div className="lg:col-span-5 space-y-4">
@@ -1053,7 +1075,7 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3.5">
                 {[
                   { label: "Cổng thông tin Đà Nẵng", url: "https://danang.gov.vn/" },
-                  { label: "Sở Xây dựng Đà Nẵng", url: "https://sxd.danang.gov.vn/" },
+                  { label: "Cổng thông tin phát triển đô thị", url: "https://danang.gov.vn/" },
                   { label: "Trung tâm hành chính công Đà Nẵng", url: "https://dichvucong.danang.gov.vn/" },
                   { label: "Cổng dữ liệu mở Đà Nẵng", url: "https://opendata.danang.gov.vn/" },
                   { label: "NOXH.net", url: "https://noxh.net/" },
