@@ -21,7 +21,7 @@ import {
   Cpu,
   Sparkles
 } from "lucide-react";
-import { Project } from "../types";
+import { Project, WARDS } from "../types";
 
 interface Article {
   id: string;
@@ -332,7 +332,7 @@ export function AdminPanel() {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 shadow-xl rounded-[32px] p-8 text-center animate-fade-up">
+      <div className="max-w-md mx-auto my-12 bg-white border border-slate-200 shadow-xl rounded-xl p-8 text-center animate-fade-up">
         <div className="w-16 h-16 bg-blue-50 text-blue-800 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-blue-100">
           <ShieldAlert className="h-8 w-8" />
         </div>
@@ -386,7 +386,7 @@ export function AdminPanel() {
       )}
 
       {/* Control cabinet header dashboard banner */}
-      <div className="bg-white border border-slate-150 rounded-3xl p-6.5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
+      <div className="bg-white border border-slate-150 rounded-xl p-6.5 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 text-left">
         <div>
           <div className="flex items-center gap-2.5">
             <span className="px-2.5 py-0.5 rounded-full text-[9px] font-black bg-blue-100 text-blue-800 uppercase border border-blue-200">BẢN REAL-TIME</span>
@@ -479,7 +479,7 @@ export function AdminPanel() {
             </div>
 
             {/* List Table */}
-            <div className="bg-white border border-slate-150 rounded-3xl overflow-hidden shadow-sm">
+            <div className="bg-white border border-slate-150 rounded-xl overflow-hidden shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-left font-sans">
                   <thead className="bg-[#f8fafc] text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-150">
@@ -618,7 +618,7 @@ export function AdminPanel() {
 
         {/* TAB 3: STATS REALTIME INDICATORS PANEL */}
         {activeSubTab === "stats" && (
-          <div className="bg-white border border-slate-150 rounded-3xl p-6.5 shadow-sm space-y-6">
+          <div className="bg-white border border-slate-150 rounded-xl p-6.5 shadow-sm space-y-6">
             <div>
               <h3 className="font-sans font-bold text-slate-800 text-sm md:text-base uppercase">ĐIỀU CHỈNH CHÌA KHÓA BÁO CÁO TRÊN TRANG CHỦ</h3>
               <p className="text-xs text-slate-400 mt-1">Các con số này được liên kết trực tiếp với 4 thẻ tóm tắt năng lực thực tế ở phía dưới trang chủ.</p>
@@ -684,7 +684,7 @@ export function AdminPanel() {
 
         {/* TAB 4: CONFIG & GEMINI API KEY */}
         {activeSubTab === "config" && (
-          <div className="bg-white border border-slate-150 rounded-3xl p-6.5 shadow-sm space-y-6">
+          <div className="bg-white border border-slate-150 rounded-xl p-6.5 shadow-sm space-y-6">
             <div>
               <h3 className="font-sans font-bold text-slate-800 text-sm md:text-base uppercase">CẤU HÌNH AI BOT & GEMINI API KEY</h3>
               <p className="text-xs text-slate-400 mt-1 font-medium">Cài đặt trực tiếp khóa API Gemini AI để kích hoạt chức năng Trợ lý ảo NOXH Bot đa tài năng.</p>
@@ -804,14 +804,14 @@ export function AdminPanel() {
 
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 {/* Left Column: API Parameters Configuration */}
-                <div className="xl:col-span-5 space-y-5">
-                  <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase font-mono">1. THÔNG SỐ ĐẦU CUỐI WEBHOOK</span>
+                <div className="xl:col-span-12 space-y-5">
+                  <span className="text-[10px] font-black text-slate-450 tracking-widest block uppercase font-mono">Thông Số Đầu Cuối Webhook</span>
                   
-                  <div className="bg-slate-50 border border-slate-200/60 rounded-3xl p-5 space-y-4">
+                  <div className="bg-slate-50 border border-slate-200/60 rounded-xl p-5 space-y-4">
                     <div className="flex items-center justify-between pb-3 border-b border-slate-150">
                       <span className="text-xs font-bold text-slate-500">Trạng thái Webhook:</span>
                       <span className="inline-flex items-center gap-1.5 text-xs font-extrabold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                         SẴN SÀNG NHẬN PUSH
                       </span>
                     </div>
@@ -891,8 +891,8 @@ export function AdminPanel() {
                     </div>
                   </div>
 
-                  <div className="space-y-3 bg-[#f8fafc] border border-slate-200 rounded-3xl p-5">
-                    <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase font-mono">2. CHẠY THỬ NGHIỆM ĐỂ KIỂM TRA BOT</span>
+                  <div className="space-y-3 bg-[#f8fafc] border border-slate-200 rounded-xl p-5">
+                    <span className="text-[10px] font-black text-slate-400 tracking-widest block uppercase font-mono">Chạy Thử Nghiệm Để Kiểm Tra Bot</span>
                     <p className="text-[11px] text-slate-500 leading-relaxed">
                       Kiểm nghiệm tính năng đẩy tin tức tức thì bằng cách kích hoạt gói n8n mô phỏng. Trợ lý AI thế hệ mới sẽ tự động viết một bản tin quy hoạch, kí số bằng Token bên trên, và đẩy trực tiếp vào bảng danh sách bài viết.
                     </p>
@@ -1081,7 +1081,7 @@ export function AdminPanel() {
       {/* PROJECT EDITOR DIALOG MODAL */}
       {editingProject && (
         <div className="fixed inset-0 z-[220] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-3xl w-full max-h-[90vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up flex flex-col">
+          <div className="bg-white rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up flex flex-col">
             
             <HeaderModal 
               title={editingProject.id ? "Hiệu Chỉnh Chi Tiết Dự Án NOXH" : "Thêm Dự Án Xã Hội Mới"}
@@ -1123,17 +1123,7 @@ export function AdminPanel() {
                     onChange={(e) => setEditingProject({ ...editingProject, districts: e.target.value })}
                     className="w-full px-3.5 py-2.5 border rounded-xl text-xs focus:ring-2 focus:ring-blue-500/10 focus:outline-none bg-white font-semibold"
                   >
-                    {[
-                      "Phường Hòa Khánh Bắc",
-                      "Phường Hòa Hiệp Nam",
-                      "Phường Nại Hiên Đông",
-                      "Phường Hòa Thọ Đông",
-                      "Phường Khuê Mỹ",
-                      "Phường Thạch Thang",
-                      "Phường Hải Châu I",
-                      "Phường Mỹ An",
-                      "Xã Hòa Tiến"
-                    ].map((w) => (
+                    {WARDS.map((w) => (
                       <option key={w} value={w}>{w}</option>
                     ))}
                   </select>
@@ -1311,7 +1301,7 @@ export function AdminPanel() {
       {/* ARTICLES EDITOR DIALOG MODAL */}
       {editingNews && (
         <div className="fixed inset-0 z-[220] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-2xl w-full max-h-[90vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up flex flex-col">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up flex flex-col">
             
             <HeaderModal 
               title={editingNews.id ? "Hiệu chỉnh bài viết" : "Xuất bản tin tức mới"}

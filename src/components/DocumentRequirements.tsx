@@ -124,7 +124,7 @@ export function DocumentRequirements() {
   ];
 
   return (
-    <div className="bg-slate-50 border border-slate-200/80 rounded-3xl overflow-hidden shadow-premium grid grid-cols-1 lg:grid-cols-12 min-h-[680px] text-left">
+    <div className="bg-slate-50 border border-slate-200/80 rounded-xl overflow-hidden shadow-premium grid grid-cols-1 lg:grid-cols-12 min-h-[680px] text-left">
       
       {/* Side Quick Navigation */}
       <div className="lg:col-span-3 bg-white p-6 md:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-r border-slate-200">
@@ -146,9 +146,9 @@ export function DocumentRequirements() {
             {[
               { id: "wizard", label: "Hệ thống tự kiểm tra", sub: "Interactive Self-Check Tool", icon: Calculator, accent: "border-blue-500" },
               { id: "loancalc", label: "Tính vay & Trả góp", sub: "VBSP Loan Financial Planner", icon: Wallet, accent: "border-sky-500" },
-              { id: "doituong", label: "1. Đối tượng ưu đãi", sub: "12 nhóm đối tượng hưởng chính sách", icon: Users, accent: "border-emerald-500" },
-              { id: "nhao", label: "2. Điều kiện về Nhà ở", sub: "Hạn mức diện tích & Sở hữu", icon: Home, accent: "border-indigo-500" },
-              { id: "thunhap", label: "3. Điều kiện về Thu nhập", sub: "Hạn mức thu nhập mới 2026", icon: Wallet, accent: "border-amber-500" },
+              { id: "doituong", label: "Đối tượng ưu đãi", sub: "12 nhóm đối tượng hưởng chính sách", icon: Users, accent: "border-emerald-500" },
+              { id: "nhao", label: "Điều kiện về Nhà ở", sub: "Hạn mức diện tích & Sở hữu", icon: Home, accent: "border-indigo-500" },
+              { id: "thunhap", label: "Điều kiện về Thu nhập", sub: "Hạn mức thu nhập mới 2026", icon: Wallet, accent: "border-amber-500" },
               { id: "roadmap", label: "Quy trình nộp & Phê duyệt", sub: "Quy trình 5 bước hành chính", icon: Calendar, accent: "border-purple-500" }
             ].map((bt) => {
               const IconComp = bt.icon;
@@ -157,7 +157,7 @@ export function DocumentRequirements() {
                 <button
                   key={bt.id}
                   onClick={() => setActiveSection(bt.id as any)}
-                  className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left outline-none ${
+                  className={`w-full p-3.5 rounded-2xl flex items-center gap-3.5 transition-all text-left outline-none select-none cursor-pointer ${
                     isSelected
                       ? "bg-[#00355f] text-white shadow-md font-bold scale-[1.02] border-l-4 " + bt.accent
                       : "bg-slate-50 hover:bg-slate-100 border border-slate-150 text-slate-700"
@@ -302,7 +302,7 @@ export function DocumentRequirements() {
             <div className="space-y-6 animate-fade-up">
               {/* Header */}
               <div className="flex items-center justify-between border-b border-slate-150 pb-5 flex-wrap gap-4">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 text-left">
                   <div className="p-2.5 bg-blue-50 text-[#00355f] border border-blue-150 rounded-2xl shadow-inner">
                     <Wallet className="h-5 w-5" />
                   </div>
@@ -533,9 +533,9 @@ export function DocumentRequirements() {
                   </div>
 
                   {/* Highlights Monthly Banner indicator */}
-                  <div className="bg-slate-900 text-white rounded-3xl p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-6">
+                  <div className="bg-slate-900 text-white rounded-xl p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-6">
                     <div className="space-y-1 textarea-left text-center md:text-left">
-                      <span className="text-[9.5px] text-[#00daf3] uppercase font-bold tracking-widest block">KHẢO SÁT KỲ TRẢ GÓP THÁNG ĐẦU</span>
+                      <span className="text-[9.5px] text-blue-400 uppercase font-bold tracking-widest block">KHẢO SÁT KỲ TRẢ GÓP THÁNG ĐẦU</span>
                       <h4 className="text-xl md:text-2xl font-black font-sans leading-none mt-1">
                         {calcMethod === "reducing" ? (
                           <>
@@ -634,7 +634,7 @@ export function DocumentRequirements() {
               </div>
 
               {/* Detailed schedule list table toggling */}
-              <div className="bg-white border border-slate-200 rounded-3xl p-5 md:p-6 space-y-4 shadow-xs text-left">
+              <div className="bg-white border border-slate-200 rounded-xl p-5 md:p-6 space-y-4 shadow-xs text-left">
                 <div className="flex justify-between items-center flex-wrap gap-4">
                   <div className="space-y-0.5">
                     <h5 className="font-sans font-bold text-xs uppercase tracking-wider text-slate-800">
@@ -983,7 +983,7 @@ export function DocumentRequirements() {
                 <div className="space-y-6 animate-fade-up">
                   
                   {/* Verdict Frame */}
-                  <div className={`p-6 md:p-8 rounded-3xl border flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 ${
+                  <div className={`p-6 md:p-8 rounded-xl border flex flex-col md:flex-row items-center md:items-start gap-4 md:gap-6 ${
                     res.qualified 
                       ? "bg-emerald-50 border-emerald-250 text-emerald-950" 
                       : "bg-rose-50 border-rose-250 text-rose-950"
@@ -1200,7 +1200,7 @@ export function DocumentRequirements() {
               ⚠️ Độc thân được nâng hạn mức thu nhập tối đa lên 25 triệu VNĐ/tháng, và gia đình đã kết hôn là 50 triệu VNĐ/tháng sau thuế thực tế để hỗ trợ người lao động đô thị Đà Nẵng tiếp cận nhà sạch hơn trong suy thoái kinh tế.
             </div>
 
-            <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+            <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm space-y-4">
               <div className="border-b border-slate-100 pb-3">
                 <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-[#00355f] font-black text-[10px] uppercase tracking-wider">
                   Điều 30. Điều kiện về thu nhập hằng tháng

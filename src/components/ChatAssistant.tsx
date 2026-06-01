@@ -149,14 +149,14 @@ export function ChatAssistant({ onClose }: ChatAssistantProps) {
   };
 
   return (
-    <div className="bg-white border border-brand-border rounded-2xl md:rounded-3xl shadow-2xl flex flex-col h-[520px] md:h-[620px] overflow-hidden">
+    <div className="bg-white border border-brand-border rounded-xl shadow-2xl flex flex-col h-[520px] md:h-[620px] overflow-hidden">
       
       {/* Chat header panel */}
-      <div className="bg-primary-dark p-4 flex justify-between items-center text-white shrink-0">
+      <div className="bg-[#00355f] p-4 flex justify-between items-center text-white shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="relative">
             <div className="bg-white/20 p-2 rounded-xl">
-              <Bot className="h-5 w-5 text-accent-cyan" />
+              <Bot className="h-5 w-5 text-white" />
             </div>
             <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-primary-dark"></span>
           </div>

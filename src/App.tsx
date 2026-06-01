@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Project } from "./types";
+import { Project, WARDS } from "./types";
 import { ProjectCard } from "./components/ProjectCard";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "./firebase";
@@ -35,7 +35,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   
   // Navigation tabs - preserved exactly as requested with added admin mode
-  const [activeTab, setActiveTab] = useState<"home" | "map" | "hoso" | "tintuc" | "admin">("home");
+  const [activeTab, setActiveTab] = useState<"home" | "map" | "duan" | "hoso" | "tintuc" | "admin">("home");
   
   // System indicators configuration
   const [stats, setStats] = useState<any[]>([
@@ -66,6 +66,9 @@ export default function App() {
 
   // FAQ accordion support
   const [expandedFaqId, setExpandedFaqId] = useState<number | null>(null);
+
+  // Sync state for citizen registration drawer
+  const [isRegisteringUser, setIsRegisteringUser] = useCitizenReg();
 
   // Load project records and statistics dynamically (fallback/initial)
   const loadMasterData = async () => {
@@ -243,6 +246,7 @@ export default function App() {
             {[
               { id: "home", label: "Trang chủ" },
               { id: "map", label: "Bản đồ" },
+              { id: "duan", label: "Dự án NOXH" },
               { id: "hoso", label: "Hồ sơ & Điều kiện" },
               { id: "tintuc", label: "Tin tức" }
             ].map((tab) => (
@@ -302,7 +306,7 @@ export default function App() {
       {/* Hero Registration dialog mockup */}
       {isRegisteringUser && (
         <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 text-left relative shadow-2xl border border-slate-200 animate-fade-up">
+          <div className="bg-white rounded-xl max-w-md w-full p-6 text-left relative shadow-2xl border border-slate-200 animate-fade-up">
             <button 
               onClick={() => setIsRegisteringUser(false)}
               className="absolute top-4 right-4 p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-500 rounded-full transition-colors"
@@ -350,17 +354,17 @@ export default function App() {
             <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col items-center text-center mt-6">
               
               {/* Display headers */}
-              <h1 className="font-sans font-extrabold text-[32px] sm:text-[44px] lg:text-[54px] text-primary-dark lg:leading-[1.15] tracking-tight max-w-5xl animate-fade-up">
+              <h1 className="font-sans font-extrabold text-[32px] sm:text-[44px] lg:text-[50px] text-[#00355f] lg:leading-[1.2] tracking-tight max-w-5xl animate-fade-up">
                 Cổng Tra Cứu Nhà Ở Xã Hội <br /> 
-                <span className="text-gradient">Thành phố Đà Nẵng</span>
+                <span className="text-[#00355f]">Thành phố Đà Nẵng</span>
               </h1>
               
-              <p className="font-sans text-sm sm:text-base text-slate-600 max-w-3xl mt-6 mb-10 leading-relaxed font-semibold animate-fade-up">
-                Công cụ tra cứu thông tin chính sách, bản đồ quy hoạch GIS định hướng, đánh giá điều kiện sở hữu và theo dõi tiến độ nộp phê duyệt căn hộ công bằng, thực tế cho công dân và người lao động thành phố.
+              <p className="font-sans text-xs sm:text-sm text-slate-600 max-w-2xl mt-4 mb-8 leading-relaxed font-semibold animate-fade-up">
+                Cổng tra cứu quy hoạch GIS, đánh giá điều kiện mua và theo dõi hồ sơ Nhà ở Xã hội Đà Nẵng.
               </p>
 
               {/* Comprehensive Search Panel */}
-              <div className="w-full max-w-4xl glass-panel rounded-3xl p-3 shadow-glass border border-white/60 mb-8 animate-fade-up">
+              <div className="w-full max-w-4xl glass-panel rounded-xl p-3 shadow-glass border border-white/60 mb-8 animate-fade-up">
                 <form onSubmit={handleHeroSearchSubmit} className="grid grid-cols-1 md:grid-cols-12 gap-2.5">
                   
                   {/* Text query input */}
@@ -383,17 +387,10 @@ export default function App() {
                       onChange={(e) => setHeroWardText(e.target.value)}
                       className="w-full pl-11 pr-8 py-3.5 bg-white/75 hover:bg-white border-0 rounded-2xl font-sans text-xs sm:text-sm shadow-sm cursor-pointer focus:outline-none text-slate-800"
                     >
-                      <option value="">Tất cả Phường/Xã (93 đơn vị)</option>
-                      <option value="Phường Hòa Khánh Bắc">Phường Hòa Khánh Bắc</option>
-                      <option value="Phường Hòa Hiệp Nam">Phường Hòa Hiệp Nam</option>
-                      <option value="Phường Nại Hiên Đông">Phường Nại Hiên Đông</option>
-                      <option value="Phường Hòa Thọ Đông">Phường Hòa Thọ Đông</option>
-                      <option value="Phường Khuê Mỹ">Phường Khuê Mỹ</option>
-                      <option value="Phường Thạch Thang">Phường Thạch Thang</option>
-                      <option value="Phường Hải Châu I">Phường Hải Châu I</option>
-                      <option value="Phường Mỹ An">Phường Mỹ An</option>
-                      <option value="Phường An Hải Bắc">Phường An Hải Bắc</option>
-                      <option value="Xã Hòa Tiến">Xã Hòa Tiến</option>
+                      <option value="">Tất cả Phường/Xã ({WARDS.length} đơn vị)</option>
+                      {WARDS.map((w) => (
+                        <option key={w} value={w}>{w}</option>
+                      ))}
                     </select>
                   </div>
 
@@ -456,7 +453,7 @@ export default function App() {
               </p>
 
               {/* Service boxes grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-16 text-left">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16 text-left">
                 {[
                   {
                     id: "map",
@@ -497,7 +494,7 @@ export default function App() {
                         window.scrollTo({ top: 0, behavior: "smooth" });
                       }
                     }}
-                    className="group bg-white border border-slate-150 p-6.5 rounded-3xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-left flex flex-col justify-between"
+                    className="group bg-white border border-slate-150 p-6.5 rounded-xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 cursor-pointer text-left flex flex-col justify-between"
                   >
                     <div>
                       <div className={`p-2.5 rounded-xl border w-fit mb-5 ${bex.accent} shadow-inner`}>
@@ -561,6 +558,9 @@ export default function App() {
                           const found = projects.find((p) => p.id === id);
                           if (found) setModalProject(found);
                         }}
+                        searchKey={searchKey}
+                        selectedWard={selectedWard}
+                        statusFilter={statusFilter}
                       />
 
                       {/* Compact Project Cards Grid right under the Map block! */}
@@ -619,7 +619,7 @@ export default function App() {
                         </div>
 
                         {filteredCollection.length === 0 ? (
-                          <div className="py-20 text-center border border-dashed border-slate-200 bg-white rounded-3xl max-w-lg mx-auto">
+                          <div className="py-20 text-center border border-dashed border-slate-200 bg-white rounded-xl max-w-lg mx-auto">
                             <span className="material-symbols-outlined text-[48px] text-slate-400 mb-3">apartment_disabled</span>
                             <p className="font-sans text-sm font-semibold text-slate-800">
                               Không tìm thấy dự án nhà ở xã hội phù hợp tiêu chí của bạn.
@@ -656,6 +656,168 @@ export default function App() {
                             ))}
                           </div>
                         )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 1.2 DEDICATED SOCIAL HOUSING PROJECTS TAB */}
+                  {activeTab === "duan" && (
+                    <div className="space-y-12 animate-fade-up text-left">
+                      
+                      {/* Interactive dynamic Counter cards showing actual statistics */}
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                        <div className="bg-white border border-slate-150 p-5 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center">
+                          <span className="material-symbols-outlined text-indigo-600 text-3xl mb-1.5">apartment</span>
+                          <span className="font-sans font-black text-2xl text-slate-900">{projects.length}</span>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Tổng dự án</span>
+                        </div>
+                        <div className="bg-white border border-slate-150 p-5 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center">
+                          <span className="material-symbols-outlined text-emerald-600 text-3xl mb-1.5">assignment_turned_in</span>
+                          <span className="font-sans font-black text-2xl text-slate-900">
+                            {projects.filter(p => p.tag === "receiving").length}
+                          </span>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Đang nhận hồ sơ</span>
+                        </div>
+                        <div className="bg-white border border-slate-150 p-5 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center">
+                          <span className="material-symbols-outlined text-amber-500 text-3xl mb-1.5">schedule</span>
+                          <span className="font-sans font-black text-2xl text-slate-900">
+                            {projects.filter(p => p.tag === "coming_soon").length}
+                          </span>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Sắp mở bán</span>
+                        </div>
+                        <div className="bg-white border border-slate-150 p-5 rounded-2xl shadow-sm text-center flex flex-col items-center justify-center">
+                          <span className="material-symbols-outlined text-blue-600 text-3xl mb-1.5">check_circle</span>
+                          <span className="font-sans font-black text-2xl text-slate-900">
+                            {projects.filter(p => p.tag === "completed").length}
+                          </span>
+                          <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Đã bàn giao</span>
+                        </div>
+                      </div>
+
+                      <div className="border-t border-slate-150 pt-8">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                          <div>
+                            <h3 className="font-sans font-black text-slate-900 text-lg sm:text-xl uppercase tracking-tight">
+                              Danh Sách Dự Án Nhà Ở Xã Hội
+                            </h3>
+                            <p className="text-xs text-slate-500 mt-1">Tra cứu đầy đủ thông tin pháp lý, tiến độ bàn giao và hồ sơ đăng ký dự kiến.</p>
+                          </div>
+                          
+                          <span className="font-sans text-xs text-slate-500 tracking-wide font-medium">
+                            Tìm thấy <span className="font-bold text-slate-900">{filteredCollection.length}</span> dự án phù hợp
+                          </span>
+                        </div>
+
+                        {/* Interactive combined filter zone */}
+                        <div className="bg-white p-5 border border-slate-150 rounded-xl shadow-sm space-y-4 mb-8">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            
+                            {/* Filter input */}
+                            <div className="relative flex items-center">
+                              <Search className="absolute left-3.5 h-4 w-4 text-slate-400" />
+                              <input
+                                type="text"
+                                value={searchKey}
+                                onChange={(e) => setSearchKey(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-[#00355f]/10 focus:outline-none rounded-xl font-sans text-xs text-slate-800"
+                                placeholder="Nhập tên dự án, chủ đầu tư, vị trí..."
+                              />
+                            </div>
+
+                            {/* Ward selector dropdown */}
+                            <div className="relative flex items-center">
+                              <span className="material-symbols-outlined absolute left-3.5 text-[18px] text-slate-400">location_on</span>
+                              <select
+                                value={selectedWard}
+                                onChange={(e) => {
+                                  setSelectedWard(e.target.value);
+                                  setHeroWardText(e.target.value);
+                                }}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 focus:ring-2 focus:ring-[#00355f]/10 focus:outline-none rounded-xl font-sans text-xs text-slate-800 cursor-pointer"
+                              >
+                                <option value="">Tất cả Phường/Xã ({WARDS.length} đơn vị)</option>
+                                {WARDS.map((w) => (
+                                  <option key={w} value={w}>{w}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Status filter selection drop */}
+                            <div className="relative flex items-center">
+                              <span className="material-symbols-outlined absolute left-3.5 text-[18px] text-slate-400">filter_alt</span>
+                              <select
+                                value={statusFilter}
+                                onChange={(e) => setStatusFilter(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 bg-slate-50 hover:bg-slate-100/70 border border-slate-200 focus:ring-2 focus:ring-[#00355f]/10 focus:outline-none rounded-xl font-sans text-xs text-slate-800 cursor-pointer animate-fade-in"
+                              >
+                                <option value="all">Mọi trạng thái dự án</option>
+                                <option value="receiving">Đang nhận hồ sơ đăng ký</option>
+                                <option value="coming_soon">Chuẩn bị triển khai / Sắp mở bán</option>
+                                <option value="completed">Đã hoàn thiện & Bàn giao nhà</option>
+                              </select>
+                            </div>
+
+                          </div>
+
+                          {/* Quick clear stats filters alert info */}
+                          {(searchKey || selectedWard || statusFilter !== "all") && (
+                            <div className="flex items-center justify-between bg-blue-50/50 px-4 py-2.5 rounded-xl border border-blue-100 text-xs">
+                              <div className="flex items-center gap-1.5 text-blue-900 font-semibold">
+                                <span className="material-symbols-outlined text-[16px]">info</span>
+                                <span>Đang áp dụng bộ lọc nâng cao tinh gọn cho danh sách dự án.</span>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  setSearchKey("");
+                                  setSelectedWard("");
+                                  setStatusFilter("all");
+                                }}
+                                className="text-red-650 hover:text-red-700 font-bold transition-all flex items-center gap-0.5 cursor-pointer"
+                              >
+                                <X className="h-4.5 w-4.5" /> Hủy lọc
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* List grid */}
+                        {filteredCollection.length === 0 ? (
+                          <div className="py-20 text-center border border-dashed border-slate-200 bg-white rounded-xl max-w-lg mx-auto">
+                            <span className="material-symbols-outlined text-[48px] text-slate-400 mb-3">apartment_disabled</span>
+                            <p className="font-sans text-sm font-semibold text-slate-800">
+                              Không tìm thấy dự án nhà ở xã hội phù hợp tiêu chí của bạn.
+                            </p>
+                            <button
+                              onClick={() => {
+                                  setSearchKey("");
+                                  setSelectedWard("");
+                                  setStatusFilter("all");
+                              }}
+                              className="mt-6 px-4 py-2 bg-[#00355f] text-white font-bold text-xs rounded-xl shadow cursor-pointer"
+                            >
+                              Tải lại tất cả dự án
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {filteredCollection.map((proj) => (
+                              <div 
+                                key={proj.id}
+                                className="transition-transform duration-300 hover:scale-[1.01]"
+                              >
+                                <ProjectCard
+                                  project={proj}
+                                  onViewDetails={(id) => {
+                                    const found = projects.find((p) => p.id === id);
+                                    if (found) setModalProject(found);
+                                  }}
+                                  onShowLoc={handleShowProjectOnGisMap}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                       </div>
                     </div>
                   )}
@@ -710,15 +872,15 @@ export default function App() {
                 {stats.map((stat, idx) => (
                   <div 
                     key={idx}
-                    className="bg-white/5 backdrop-blur-xl border border-white/10 p-8.5 rounded-3xl hover:bg-white/10 transition-colors duration-300 flex flex-col items-center text-center group"
+                    className="bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-xl hover:bg-white/10 transition-colors duration-300 flex flex-col items-center text-center group"
                   >
-                    <div className="p-3 bg-white/10 text-accent-cyan rounded-2xl w-fit mb-5 shadow-sm group-hover:scale-105 transition-transform duration-200">
+                    <div className="p-3 bg-white/10 text-white rounded-xl w-fit mb-5 shadow-sm group-hover:scale-105 transition-transform duration-200">
                       <span className="material-symbols-outlined block text-[32.5px]">{stat.icon}</span>
                     </div>
                     <div className="font-sans font-black text-3xl sm:text-4xl text-white tracking-tight mb-2">
                       {stat.count}
                     </div>
-                    <p className="font-sans text-xs font-bold text-accent-cyan uppercase tracking-wider mb-1.5">
+                    <p className="font-sans text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
                       {stat.label}
                     </p>
                     <p className="font-sans text-[10px] text-slate-300">
@@ -735,7 +897,7 @@ export default function App() {
         {/* IN-DEPTH MODAL LANDING DETAILS COMPONENT */}
         {modalProject && (
           <div className="fixed inset-0 z-100 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-            <div className="bg-white rounded-[32px] max-w-3xl w-full max-h-[92vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up">
+            <div className="bg-white rounded-xl max-w-3xl w-full max-h-[92vh] overflow-y-auto text-left relative shadow-2xl border border-slate-200 animate-fade-up">
               
               {/* Image Header with float exit x */}
               <div className="relative h-64 md:h-80 overflow-hidden shrink-0">

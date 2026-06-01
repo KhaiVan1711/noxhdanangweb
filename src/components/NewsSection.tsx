@@ -164,7 +164,7 @@ export function NewsSection() {
       {/* Detail View Modal (Premium Reader View) */}
       {selectedArticle && (
         <div className="fixed inset-0 z-[200] bg-slate-950/75 backdrop-blur-xl flex items-center justify-center p-4">
-          <div className="bg-white rounded-[32px] max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col text-left shadow-2xl border border-slate-200 animate-scale-up">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col text-left shadow-2xl border border-slate-200 animate-scale-up">
             
             {/* Header image area */}
             <div className="relative h-64 shrink-0 overflow-hidden">
@@ -239,7 +239,7 @@ export function NewsSection() {
 
 
       {/* ── CENTRALIZED FILTER AND SEARCH CONTROLLER ── */}
-      <div className="bg-white border border-slate-200 rounded-[32px] p-5 shadow-lg flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 text-left">
+      <div className="bg-white border border-slate-200 rounded-xl p-5 shadow-lg flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 text-left">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
             <BookOpen className="h-5 w-5 text-blue-600" />
@@ -291,7 +291,7 @@ export function NewsSection() {
         {featuredArticle && activeCategory === "all" && searchQuery === "" && (
           <div 
             onClick={() => setSelectedArticle(featuredArticle)}
-            className="group relative bg-white border border-slate-200 rounded-[36px] overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer flex flex-col md:grid md:grid-cols-12 max-w-full text-left"
+            className="group relative bg-white border border-slate-200 rounded-xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500 hover:-translate-y-1 cursor-pointer flex flex-col md:grid md:grid-cols-12 max-w-full text-left"
           >
             {/* Banner block */}
             <div className="md:col-span-7 h-64 md:h-96 relative overflow-hidden shrink-0">
@@ -350,7 +350,7 @@ export function NewsSection() {
               <div
                 key={art.id}
                 onClick={() => setSelectedArticle(art)}
-                className="group bg-white rounded-[32px] border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full"
+                className="group bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full"
               >
                 <div className="h-48 overflow-hidden relative shrink-0">
                   <img
@@ -395,7 +395,7 @@ export function NewsSection() {
 
         {/* Empty state fallback screen */}
         {filteredArticles.length === 0 && (
-          <div className="py-20 text-center bg-white border border-dashed border-slate-200 rounded-[36px] max-w-lg mx-auto">
+          <div className="py-20 text-center bg-white border border-dashed border-slate-200 rounded-xl max-w-lg mx-auto">
             <FileText className="h-12 w-12 text-slate-300 mx-auto mb-3" />
             <p className="font-sans font-extrabold text-xs text-slate-800 uppercase tracking-widest">Không tìm thấy bản tin tương ứng</p>
             <p className="font-sans text-[10px] text-slate-400 mt-1 max-w-xs mx-auto leading-relaxed">Hãy thay đổi từ khóa lọc tìm kiếm hoặc nhấn nút mô phỏng n8n ở trên để tự sinh tin tức bằng AI ngay!</p>

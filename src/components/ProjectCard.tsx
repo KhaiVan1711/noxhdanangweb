@@ -24,88 +24,85 @@ export function ProjectCard({ project, onViewDetails, onShowLoc }: ProjectCardPr
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
-      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-      className="bg-white rounded-[24px] border border-brand-border overflow-hidden shadow-premium hover:shadow-2xl transition-all duration-350 hover:-translate-y-1.5 group flex flex-col h-full"
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+      className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 group flex flex-col h-full"
     >
       {/* Card Image Area */}
-      <div className="relative h-60 overflow-hidden m-3 rounded-[18px]">
+      <div className="relative h-56 overflow-hidden m-2 rounded-xl">
         <img
           alt={project.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+          className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-500 ease-out"
           src={project.image}
           referrerPolicy="no-referrer"
         />
         {/* Status Badge */}
-        <div className="absolute top-4 right-4 bg-white/95 backdrop-blur-md px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-sm border border-white">
-          <span className="relative flex h-2.5 w-2.5">
-            {project.tag !== "completed" && (
-              <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${getBadgeColor(project.tag)}`}></span>
-            )}
-            <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${getBadgeColor(project.tag)}`}></span>
+        <div className="absolute top-3 right-3 bg-white/95 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5 shadow-sm border border-slate-100">
+          <span className="relative flex h-2 w-2">
+            <span className={`relative inline-flex rounded-full h-2 w-2 ${getBadgeColor(project.tag)}`}></span>
           </span>
-          <span className="font-sans text-xs font-semibold text-primary-dark tracking-wide">
+          <span className="font-sans text-[10px] font-bold text-slate-800 tracking-wide uppercase">
             {project.status}
           </span>
         </div>
         
-        {/* Gradient Overlay and Title */}
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent p-5 pt-16">
-          <h3 className="font-sans font-bold text-white text-lg md:text-xl leading-snug drop-shadow-sm line-clamp-1">
+        {/* Deep Slate Dark Overlay and Title */}
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 via-slate-900/40 to-transparent p-4 pt-12">
+          <h3 className="font-sans font-bold text-white text-md leading-snug drop-shadow-sm line-clamp-1">
             {project.name}
           </h3>
         </div>
       </div>
 
       {/* Card Content */}
-      <div className="p-6 pt-2 flex-grow flex flex-col justify-between">
-        <div className="space-y-4">
+      <div className="p-5 pt-1.5 flex-grow flex flex-col justify-between">
+        <div className="space-y-3">
           {/* Location Pin */}
-          <div className="flex items-start gap-2.5 text-brand-muted hover:text-black transition-colors duration-200">
-            <MapPin className="h-4.5 w-4.5 shrink-0 mt-0.5 text-blue-600" />
-            <p className="font-sans text-sm leading-relaxed line-clamp-2">
+          <div className="flex items-start gap-2 text-slate-600 hover:text-black transition-colors duration-200">
+            <MapPin className="h-4 w-4 shrink-0 mt-0.5 text-[#00355f]" />
+            <p className="font-sans text-xs leading-normal line-clamp-2">
               {project.location}
             </p>
           </div>
 
           {/* Quick info row */}
-          <div className="flex flex-col gap-1 text-xs text-brand-muted border-t border-brand-border/60 pt-3">
+          <div className="flex flex-col gap-1 text-[11px] text-slate-500 border-t border-slate-100 pt-2.5">
             <span className="flex items-center gap-1.5">
-              <Building2 className="h-3.5 w-3.5 text-blue-800" />
-              Chủ đầu tư: <span className="font-medium text-primary-dark truncate">{project.investor}</span>
+              <Building2 className="h-3.5 w-3.5 text-[#00355f]" />
+              Chủ đầu tư: <span className="font-semibold text-slate-800 truncate">{project.investor}</span>
             </span>
             <span className="flex items-center gap-1.5">
-              <ClipboardCheck className="h-3.5 w-3.5 text-green-700" />
-              Quy mô: <span className="font-medium text-slate-800 line-clamp-1">{project.scale}</span>
+              <ClipboardCheck className="h-3.5 w-3.5 text-slate-600" />
+              Quy mô: <span className="font-semibold text-slate-800 line-clamp-1">{project.scale}</span>
             </span>
           </div>
         </div>
 
         {/* Dynamic breakdown of price and construction stage */}
-        <div className="grid grid-cols-2 gap-4 border-y border-brand-border/60 py-4 my-4">
+        <div className="grid grid-cols-2 gap-4 border-y border-slate-100 py-3 my-3">
           <div>
-            <p className="font-sans text-[11px] text-brand-muted uppercase tracking-wider">
+            <p className="font-sans text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
               {project.tag === "completed" ? "Trạng thái quỹ" : "Giá dự kiến"}
             </p>
-            <p className="font-sans text-base font-bold text-primary-dark">
+            <p className="font-sans text-sm font-extrabold text-[#00355f]">
               {project.price}
-              {project.tag !== "completed" && <span className="text-[11px] font-normal text-brand-muted"> /m²</span>}
+              {project.tag !== "completed" && <span className="text-[10px] font-medium text-slate-400"> /m²</span>}
             </p>
           </div>
           <div>
             <div className="flex justify-between items-end mb-1">
-              <p className="font-sans text-[11px] text-brand-muted uppercase tracking-wider">
+              <p className="font-sans text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
                 Tiến độ thi công
               </p>
-              <span className="font-sans text-xs text-primary-dark font-bold">
+              <span className="font-sans text-xs text-[#00355f] font-extrabold">
                 {project.progress}%
               </span>
             </div>
-            <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
+            <div className="w-full h-1 bg-slate-100 rounded-full overflow-hidden">
               <div
-                className={`h-full bg-gradient-to-r ${project.tag === 'completed' ? 'from-amber-500 to-amber-600' : 'from-primary-dark to-accent-cyan'} rounded-full`}
+                className={`h-full ${project.tag === 'completed' ? 'bg-amber-600' : 'bg-[#00355f]'} rounded-full`}
                 style={{ width: `${project.progress}%` }}
               ></div>
             </div>
@@ -116,17 +113,17 @@ export function ProjectCard({ project, onViewDetails, onShowLoc }: ProjectCardPr
         <div className="flex gap-2">
           <button
             onClick={() => onViewDetails(project.id)}
-            className="flex-1 py-2.5 bg-primary-dark text-white rounded-xl text-xs font-semibold hover:bg-opacity-95 transition-all shadow-sm hover:shadow-md cursor-pointer block text-center"
+            className="flex-1 py-2 bg-[#00355f] text-white rounded-lg text-xs font-semibold hover:bg-opacity-95 transition-all cursor-pointer block text-center"
           >
             Xem chi tiết
           </button>
           {onShowLoc && (
             <button
               onClick={() => onShowLoc(project)}
-              className="px-3 bg-slate-100 hover:bg-slate-200 text-primary-dark rounded-xl transition-colors flex items-center justify-center border border-slate-200"
+              className="px-2.5 bg-slate-50 hover:bg-slate-100 text-[#00355f] rounded-lg transition-colors flex items-center justify-center border border-slate-150"
               title="Định vị trên bản đồ GIS"
             >
-              <span className="material-symbols-outlined text-[18px]">map</span>
+              <span className="material-symbols-outlined text-[16px]">map</span>
             </button>
           )}
         </div>

@@ -35,6 +35,9 @@ interface GisMapProps {
   selectedProject: Project | null;
   onSelectProject: (project: Project | null) => void;
   onViewDetails: (id: string) => void;
+  searchKey?: string;
+  selectedWard?: string;
+  statusFilter?: string;
 }
 
 type TileMode = "light" | "dark" | "satellite";
@@ -146,11 +149,10 @@ function buildMarkerHtml(color: string, isSelected: boolean): string {
       ${isSelected ? `
         <div style="
           position:absolute;
-          inset:-9px;
+          inset:-6px;
           border-radius:50%;
           border:2.5px solid ${color};
-          opacity:.35;
-          animation:ping 1.4s ease infinite;
+          opacity:.45;
         "></div>
       ` : ""}
       <div style="
@@ -349,6 +351,9 @@ export function GisMap({
   selectedProject,
   onSelectProject,
   onViewDetails,
+  searchKey,
+  selectedWard,
+  statusFilter,
 }: GisMapProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTag, setFilterTag] = useState<TagFilter>("all");
@@ -356,6 +361,19 @@ export function GisMap({
   const [sortMode, setSortMode] = useState<SortMode>("default");
   const [showFilters, setShowFilters] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
+
+  // Sync parent filter props with local states
+  useEffect(() => {
+    if (searchKey !== undefined) {
+      setSearchQuery(searchKey);
+    }
+  }, [searchKey]);
+
+  useEffect(() => {
+    if (statusFilter !== undefined) {
+      setFilterTag(statusFilter as TagFilter);
+    }
+  }, [statusFilter]);
 
   // States for Mobile Optimizations
   const [activeMobileView, setActiveMobileView] = useState<"list" | "map">("map");
@@ -396,9 +414,12 @@ export function GisMap({
       const q = searchQuery.toLowerCase();
       const matchSearch =
         p.name.toLowerCase().includes(q) ||
-        p.location.toLowerCase().includes(q);
+        p.location.toLowerCase().includes(q) ||
+        p.investor.toLowerCase().includes(q) ||
+        p.districts.toLowerCase().includes(q);
       const matchTag = filterTag === "all" || p.tag === filterTag;
-      return matchSearch && matchTag;
+      const matchWard = !selectedWard || p.districts.toLowerCase() === selectedWard.toLowerCase();
+      return matchSearch && matchTag && matchWard;
     });
 
     switch (sortMode) {
@@ -418,7 +439,17 @@ export function GisMap({
     }
 
     return list;
-  }, [projects, searchQuery, filterTag, sortMode]);
+  }, [projects, searchQuery, filterTag, sortMode, selectedWard]);
+
+  // Auto-focus and select project when there's an active filtering that results in exactly 1 match
+  useEffect(() => {
+    if ((searchQuery || filterTag !== "all" || selectedWard) && filteredProjects.length === 1) {
+      const uniqueMatch = filteredProjects[0];
+      if (!selectedProject || selectedProject.id !== uniqueMatch.id) {
+        onSelectProject(uniqueMatch);
+      }
+    }
+  }, [filteredProjects, searchQuery, filterTag, selectedWard, selectedProject, onSelectProject]);
 
   // ── TILE LAYER UPDATE ────────────────────────────────────────────────────────
 
@@ -585,7 +616,7 @@ export function GisMap({
 
       <div
         style={{ fontFamily: "'Be Vietnam Pro', system-ui, sans-serif" }}
-        className="grid grid-cols-1 lg:grid-cols-12 h-[580px] md:h-[740px] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl relative"
+        className="grid grid-cols-1 lg:grid-cols-12 h-[580px] md:h-[740px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl relative"
       >
         {/* ── SIDEBAR ──────────────────────────────────────────────────────── */}
         <div className={`lg:col-span-4 flex flex-col border-r border-slate-100 bg-white overflow-hidden ${
@@ -1069,7 +1100,7 @@ export function GisMap({
 
           {/* SELECTED PROJECT MOBILE FLOATING CARD */}
           {selectedProject && (
-            <div className="absolute bottom-4 left-4 right-4 z-[1001] bg-white border border-slate-200 shadow-2xl rounded-3xl p-4 flex flex-col gap-3 lg:hidden">
+            <div className="absolute bottom-4 left-4 right-4 z-[1001] bg-white border border-slate-200 shadow-2xl rounded-xl p-4 flex flex-col gap-3 lg:hidden">
               <div className="flex justify-between items-start">
                 <div className="flex gap-2.5 items-start">
                   <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center shrink-0 border border-blue-200">
